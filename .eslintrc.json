@@ -1,0 +1,109 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "airbnb",
+    "airbnb-typescript",
+    "airbnb/hooks",
+    "prettier",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking"
+  ],
+  "plugins": ["@typescript-eslint", "prettier", "import"],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts", ".tsx"]
+    },
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "src"
+      }
+    }
+  },
+  "rules": {
+    "prettier/prettier": [
+      "warn",
+      {
+        "printWidth": 100,
+        "tabWidth": 2,
+        "useTabs": false,
+        "semi": true,
+        "singleQuote": true,
+        "trailingComma": "all",
+        "endOfLine": "auto"
+      }
+    ],
+    "react-hooks/rules-of-hooks": "error", // Checks rules of Hooks
+    "react-hooks/exhaustive-deps": "warn", // Checks effect dependencies
+    "max-lines": ["error", 300],
+    "max-nested-callbacks": ["error", 5],
+    "max-statements-per-line": [
+      "error",
+      {
+        "max": 2
+      }
+    ],
+    "max-statements": [
+      "error",
+      50,
+      {
+        "ignoreTopLevelFunctions": true
+      }
+    ],
+    "max-params": [
+      "error",
+      {
+        "max": 6
+      }
+    ],
+    "react/react-in-jsx-scope": "off",
+    "react/require-default-props": "off",
+    "camelcase": "error",
+    "spaced-comment": "error",
+    "no-duplicate-imports": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "import/order": [
+      "error",
+      {
+        "groups": ["builtin", "external", "internal", "parent", "sibling", "index"]
+      }
+    ],
+    "react/no-array-index-key": "error",
+    "react/display-name": "error",
+    "import/no-unresolved": "error",
+    "comma-dangle": ["error", "always-multiline"],
+    "react/jsx-props-no-spreading": [
+      "warn",
+      {
+        "html": "enforce",
+        "custom": "ignore",
+        "explicitSpread": "ignore",
+        "exceptions": ["input"]
+      }
+    ],
+    "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/no-misused-promises": "off",
+    "import/prefer-default-export": "off",
+    "no-unused-expressions": "off",
+    "@typescript-eslint/no-unused-expressions": "off"
+  }
+}

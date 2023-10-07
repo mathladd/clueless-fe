@@ -1,0 +1,16 @@
+export const SIGNAL_EVENTS = [
+  'SIGHUP',
+  'SIGINT',
+  'SIGQUIT',
+  'SIGILL',
+  'SIGTRAP',
+  'SIGABRT',
+  'SIGBUS',
+  'SIGFPE',
+  'SIGUSR1',
+  'SIGSEGV',
+  'SIGUSR2',
+  'SIGTERM',
+];
+
+export const WAITING_TIME_FOR_SHUTDOWN = 10000;
