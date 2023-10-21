@@ -6,7 +6,7 @@ export interface RegionalCurrencies {
 export interface UserProfile {
   username?: string;
   email?: string;
-  bio: string;
+  bio?: string;
   avatarUrl?: string;
   coverUrl?: string;
 }

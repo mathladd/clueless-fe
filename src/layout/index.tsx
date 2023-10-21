@@ -6,7 +6,7 @@ import BodyWrapper from './BodyWrapper';
 function BaseLayout({ children }: { children: React.ReactNode }) {
   const id = useId();
   return (
-    <div key={id} className="flex flex-col min-w-screen h-full min-h-screen bg-gray-100">
+    <div key={id} className="flex flex-col h-full min-h-screen bg-gray-100 min-w-screen">
       <Header />
       <BodyWrapper>{children}</BodyWrapper>
       <Footer />
