@@ -1,16 +1,13 @@
 import type { AppProps } from 'next/app';
-
+import { Session } from 'next-auth';
 import { ChakraProvider } from '@chakra-ui/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SessionProvider } from 'next-auth/react';
 import Head from 'next/head';
 import BaseTheme from 'theme/base';
 import '../styles/globals.css';
 import { APP_NAME } from 'constants/common';
 
-// Create a client
-const queryClient = new QueryClient();
-
-function MyApp({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps, session }: AppProps & { session: Session }) {
   return (
     <>
       <Head>
@@ -21,11 +18,11 @@ function MyApp({ Component, pageProps }: AppProps) {
           name="viewport"
         />
       </Head>
-      <QueryClientProvider client={queryClient}>
+      <SessionProvider session={session}>
         <ChakraProvider theme={BaseTheme}>
           <Component {...pageProps} />
         </ChakraProvider>
-      </QueryClientProvider>
+      </SessionProvider>
     </>
   );
 }

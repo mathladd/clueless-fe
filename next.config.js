@@ -5,6 +5,9 @@ const nextConfig = {
   reactStrictMode: false,
   output: 'standalone',
   eslint: { dirs: ['/src'], ignoreDuringBuilds: true },
+  experimental: {
+    appDir: true,
+  },
   images: {
     remotePatterns: [
       {

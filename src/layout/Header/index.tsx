@@ -1,6 +1,9 @@
 import { RESPONSIVE_PADDING_X, RESPONSIVE_PADDING_Y } from 'constants/stylings';
+import useAuthentication from 'hooks/useAuthentication';
 
 export default function Header() {
+  const { user } = useAuthentication();
+  console.log(user);
   return (
     <div
       className={`sticky flex items-center justify-between h-fit w-full border-b border-gray-300 ${RESPONSIVE_PADDING_Y} ${RESPONSIVE_PADDING_X}`}
@@ -16,7 +19,7 @@ export default function Header() {
           type="button"
           className="px-4 py-2 transition rounded-lg cursor-pointer bg-slate-300 text-slate-900 hover:text-white hover:bg-slate-400"
         >
-          Profile
+          {user?.name}
         </button>
       </div>
     </div>
