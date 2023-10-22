@@ -19,7 +19,7 @@
     "assemblyscript": "^0.27.1",
     "axios": "1.1.2",
     "bignumber.js": "9.1.0",
-    "clsx": "^1.2.1",
+    "clsx": "^2.0.0",
     "daisyui": "^2.51.5",
     "date-fns": "2.29.3",
     "ethers": "^5.7.1",

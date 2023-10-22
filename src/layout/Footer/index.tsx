@@ -25,7 +25,11 @@ export default function Footer() {
           </button>
         </div>
       ) : (
-        <button type="button" onClick={onLogout} className="p-2 bg-slate-600 text-white rounded-lg">
+        <button
+          type="button"
+          onClick={onLogout}
+          className="p-3 bg-slate-600 text-white rounded-lg text-sm hover:bg-slate-700 transition"
+        >
           Logout
         </button>
       )}

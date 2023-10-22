@@ -1,50 +1,68 @@
 import useWebsocket, { ReadyState } from 'react-use-websocket';
-import { useCallback, useEffect, useState } from 'react';
-import GameList from 'components/GameList';
+import { useEffect, useState } from 'react';
+import LobbyList from 'components/LobbyList';
 import { RESPONSIVE_PADDING_X } from 'constants/stylings';
+import useLobby from 'hooks/useLobby';
+import ModalCreateLobby from './ModalCreateLobby';
 
 export default function Home() {
-  const [socketUrl, setSocketUrl] = useState('wss://socketsbay.com/wss/v2/1/demo/');
-  const [messageHistory, setMessageHistory] = useState<unknown[]>([]);
-  const { sendMessage, lastMessage, readyState } = useWebsocket(socketUrl);
+  const [isOpenModalCreateLobby, setIsOpenModalCreateLobby] = useState<boolean>(false);
 
-  const onSendData = useCallback(() => {
-    sendMessage('testing');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const {
+    onCreateLobby,
+    onGetLobbies,
+    onGetUsers,
+    getLobbiesState,
+    createLobbyState,
+    getUsersState,
+    lobbies,
+  } = useLobby();
 
-  useEffect(() => {
-    if (lastMessage !== null) {
-      setMessageHistory((prev) => prev.concat(lastMessage as unknown));
-    }
-  }, [lastMessage, setMessageHistory]);
-
-  const connectionStatus = {
-    [ReadyState.CONNECTING]: 'Connecting',
-    [ReadyState.OPEN]: 'Open',
-    [ReadyState.CLOSING]: 'Closing',
-    [ReadyState.CLOSED]: 'Closed',
-    [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-  }[readyState];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => onGetLobbies(), []);
 
   return (
-    <div className={`flex flex-col space-y-2 ${RESPONSIVE_PADDING_X} py-10`}>
-      <GameList games={[]} />
-      <button
-        type="button"
-        className="bg-slate-500 text-white p-2 rounded-lg w-fit"
-        onClick={onSendData}
-        disabled={readyState !== ReadyState.OPEN}
-      >
-        Send data
-      </button>
-      <span>The WebSocket is currently {connectionStatus}</span>
-      {lastMessage ? <span>Last message: {lastMessage.data}</span> : null}
-      <ul>
-        {messageHistory.map((message, idx) => (
-          <span key={`${idx + 1}`}>{message ? message?.data : null}</span>
-        ))}
-      </ul>
-    </div>
+    <>
+      <ModalCreateLobby
+        isOpen={isOpenModalCreateLobby}
+        onClose={() => setIsOpenModalCreateLobby(false)}
+        onSubmit={onCreateLobby}
+      />
+      <div className={`flex flex-col space-y-10 ${RESPONSIVE_PADDING_X} py-10`}>
+        <div className="flex space-x-2">
+          <button
+            type="button"
+            className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
+            onClick={onGetLobbies}
+            disabled={getLobbiesState !== ReadyState.OPEN}
+          >
+            {getLobbiesState === ReadyState.OPEN ? 'Get lobbies' : 'Loading...'}
+          </button>
+          <button
+            type="button"
+            className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
+            onClick={() => setIsOpenModalCreateLobby(true)}
+            disabled={createLobbyState !== ReadyState.OPEN}
+          >
+            Create lobby
+          </button>
+          <button
+            type="button"
+            className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
+            onClick={onGetUsers}
+            disabled={getUsersState !== ReadyState.OPEN}
+          >
+            Get users
+          </button>
+        </div>
+        <LobbyList lobbies={lobbies} />
+        {/* {lastMessage ? <span>Last message: {lastMessage.data}</span> : null} */}
+        {/* <ul>
+            {lobbies.map((message, idx) => (
+              <span key={`${idx + 1}`}>{message ? message?.data : null}</span>
+            ))}
+          </ul> */}
+      </div>
+    </>
   );
 }

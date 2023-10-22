@@ -19,7 +19,6 @@ export default function Document(props: DocumentProps) {
     <Html lang={currentLocale}>
       <Head>
         <meta charSet="utf-8" />
-        <link rel="manifest" href="/manifest.json" />
       </Head>
       <body className="bg-gray-200">
         <Main />
