@@ -130,7 +130,7 @@ async def join_lobby(json_object):
 
         response = {
             "success": "true",
-            "message": f"player joined lobby {lobby_name}"
+            "message": "player joined lobby {lobby_name}"
         }
 
         # TODO: BroadCast to everyone in lobby player has joined
@@ -163,8 +163,27 @@ async def toggle_lobby_ready(json_object):
 
 # Check if atleast 4 players are in and ALL players are ready
 async def start_game(json_object):
-    # need lobby name, username
-    None
+    lobby_name = json_object['lobby_name']
+    username = json_object['username']
+
+    #needs rework, just need to fix line where json checks each username (line 172)
+    if len(lobbies) > 3:
+        for i in range(len(lobbies)):
+            if lobbies[lobby_name].get_ready_player(username):
+                continue
+    else:
+        response = {
+            "success": "false",
+            "message": "not enough players",
+        }
+        
+    response = {
+        "success": "true",
+        "message": "all players are ready",
+    }
+
+    return str(json.dumps(response, indent = 4))
+
 
 async def get_users():
     usernames = []
