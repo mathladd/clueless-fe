@@ -42,7 +42,7 @@ export default function Home() {
       {lastMessage ? <span>Last message: {lastMessage.data}</span> : null}
       <ul>
         {messageHistory.map((message, idx) => (
-          <span key={idx}>{message ? message.data : null}</span>
+          <span key={`${idx + 1}`}>{message ? message?.data : null}</span>
         ))}
       </ul>
     </div>
