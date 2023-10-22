@@ -28,5 +28,7 @@ class Lobby:
     def start_game(self):
         self.GameBoard = GameBoard()
         self.GameBoard.select_murder_scene()
+    #   self.GameBoard.distribute_cards(players)
+
         # choose winning combo
     
