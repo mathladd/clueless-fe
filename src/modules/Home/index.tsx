@@ -1,22 +1,16 @@
-import useWebsocket, { ReadyState } from 'react-use-websocket';
+import { ReadyState } from 'react-use-websocket';
 import { useEffect, useState } from 'react';
 import LobbyList from 'components/LobbyList';
 import { RESPONSIVE_PADDING_X } from 'constants/stylings';
 import useLobby from 'hooks/useLobby';
+import useUsers from 'hooks/useUsers';
 import ModalCreateLobby from './ModalCreateLobby';
 
 export default function Home() {
   const [isOpenModalCreateLobby, setIsOpenModalCreateLobby] = useState<boolean>(false);
 
-  const {
-    onCreateLobby,
-    onGetLobbies,
-    onGetUsers,
-    getLobbiesState,
-    createLobbyState,
-    getUsersState,
-    lobbies,
-  } = useLobby();
+  const { onCreateLobby, onGetLobbies, getLobbiesState, createLobbyState, lobbies } = useLobby();
+  const { getUsersState, onGetUsers } = useUsers();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => onGetLobbies(), []);

@@ -14,12 +14,6 @@ export default function useLobby() {
   const { sendMessage: createLobby, readyState: createLobbyState } =
     useWebsocket('ws://localhost:8765');
 
-  const {
-    sendMessage: getUsers,
-    lastMessage: lastGetUsersRes,
-    readyState: getUsersState,
-  } = useWebsocket('ws://localhost:8765');
-
   const onGetLobbies = useCallback(() => {
     getLobbies(JSON.stringify({ request: 'getLobbies' }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -34,9 +28,6 @@ export default function useLobby() {
     [],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const onGetUsers = useCallback(() => getUsers(JSON.stringify({ request: 'getUsers' })), []);
-
   useEffect(() => {
     if (lastGetLobbies !== null) setLobbies([lastGetLobbies]);
   }, [lastGetLobbies, setLobbies]);
@@ -49,9 +40,7 @@ export default function useLobby() {
     lobbies,
     getLobbiesState,
     createLobbyState,
-    getUsersState,
     onGetLobbies,
     onCreateLobby,
-    onGetUsers,
   };
 }
