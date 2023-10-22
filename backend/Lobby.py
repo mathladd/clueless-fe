@@ -1,6 +1,7 @@
 import Player
-import GameBoard
+from GameBoard import GameBoard
 import json
+
 class Lobby:
     def __init__(self, host, name):
         # Host is a player object
@@ -8,6 +9,7 @@ class Lobby:
         self.name = name
         self.players = [host]
         self.ready_tracker = {}
+        self.GameBoard = None
 
     # Add player object to list of players in lobby
     def add_player(self, player):
@@ -22,4 +24,9 @@ class Lobby:
     
     def get_ready_tracker(self):
         return str(json.dumps(self.ready_tracker, indent = 4))
+    
+    def start_game(self):
+        self.GameBoard = GameBoard()
+        self.GameBoard.select_murder_scene()
+        # choose winning combo
     

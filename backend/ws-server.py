@@ -26,16 +26,22 @@ async def handler(websocket):
 
         # add user to waiting_room_connections
         if json_object['request'] == 'createUser':
-            response = await add_connection(websocket, json_object)
+            response = await create_user(websocket, json_object)
 
         elif json_object['request'] == 'createLobby':
+
             response = await create_lobby(json_object)
+
+            for key, val in waiting_room_connections.items():
+                 await val.send(response)
+            return
+                
 
         elif json_object['request'] == 'joinLobby':
             response = await join_lobby(json_object)
 
         elif json_object['request'] == 'toggleReady':
-            response = await join_lobby(json_object)
+            response = await toggle_lobby_ready(json_object)
 
         ## Debugging API Calls
         elif json_object['request'] == 'getUsers':
@@ -50,9 +56,11 @@ async def handler(websocket):
             response = "Not Implemented"
         # response of request
         print('Response: ' + response)
+        
         await websocket.send(response)
 
-async def add_connection(websocket, json_object):
+
+async def create_user(websocket, json_object):
 
     if json_object['username'] not in waiting_room_connections.keys():
 
@@ -104,41 +112,7 @@ async def create_lobby(json_object):
 async def join_lobby(json_object):
     lobby_name = json_object['lobby_name']
     username = json_object['username']
-    max_lobby_count = 9 - 1
-    if username not in waiting_room_connections.keys():
-        response = {
-            "success": "false",
-            "message": "User is not in waiting_room_connections list"
-        }
-    # Check for existing lobby
-    elif lobby_name in lobbies.keys() and len(lobbies[lobby_name].players) < max_lobby_count:
-
-        # Add player to lobby
-        lobbies[lobby_name].add_player(waiting_room_connections[username])
-
-        # delete user from waiting_room_connections domain
-        # Now user exists in lobby domain inside a lobby objects players list
-        del waiting_room_connections[username]
-
-        response = {
-            "success": "true",
-            "message": f"player joined lobby {lobby_name}"
-        }
-
-        # TODO: BroadCast to everyone in lobby player has joined
-        # 
-
-    else:
-        response = {
-            "success": "false",
-            "message": "lobby full" if len(lobbies['lobby_name'].players) else "lobby does not exist"
-        }
-    return str(json.dumps(response, indent = 4))
-
-async def join_lobby(json_object):
-    lobby_name = json_object['lobby_name']
-    username = json_object['username']
-    max_lobby_count = 9 - 1
+    max_lobby_count = 8
     if username not in waiting_room_connections.keys():
         response = {
             "success": "false",
@@ -187,6 +161,10 @@ async def toggle_lobby_ready(json_object):
 
     return str(json.dumps(response, indent = 4))
 
+# Check if atleast 4 players are in and ALL players are ready
+async def start_game(json_object):
+    # need lobby name, username
+    None
 
 async def get_users():
     usernames = []
