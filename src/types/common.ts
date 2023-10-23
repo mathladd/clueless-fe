@@ -35,6 +35,9 @@ export type Res<T> = {
 
 export type WS = {
   sendJsonMessage: SendJsonMessage;
-  lastJsonMessage: unknown;
+  lastMessage: {
+    data: any;
+    responseFor: string;
+  };
   readyState: ReadyState;
 };

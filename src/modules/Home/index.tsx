@@ -2,26 +2,37 @@ import { ReadyState } from 'react-use-websocket';
 import { useEffect, useState } from 'react';
 import LobbyList from 'components/LobbyList';
 import { RESPONSIVE_PADDING_X } from 'constants/stylings';
-import useUsers from 'hooks/useUsers';
 import { WS } from 'types/common';
-import useAuthentication from 'hooks/useAuthentication';
+import { Lobby } from 'types/lobby';
 import ModalCreateLobby from './ModalCreateLobby';
 
 export default function Home({ ws }: { ws: WS }) {
   const [isOpenModalCreateLobby, setIsOpenModalCreateLobby] = useState<boolean>(false);
-  const { user } = useAuthentication({ ws });
-  const [lobbies, setLobbies] = useState();
+  const [lobbies, setLobbies] = useState<Lobby>();
 
-  const onCreateLobby = ({ lobbyName, username }) => {
-    ws.sendJsonMessage({ request: 'createLobby', username: user?.name, lobby_name: 'test' });
+  const onCreateLobby = ({
+    lobbyName,
+    username,
+  }: {
+    lobbyName: string;
+    username: string | undefined;
+  }) => {
+    ws.sendJsonMessage({ request: 'createLobby', username, lobby_name: lobbyName });
   };
   const onGetLobbies = () => {
     ws.sendJsonMessage({ request: 'getLobbies' });
   };
-  const getLobbiesState = () => {};
-  const createLobbyState = () => {};
 
-  const { getUsersState, onGetUsers } = useUsers();
+  // { "request": "createUser", "username":"a"}
+  // { "request": "createLobby", "username":"a", "lobby_name": "1" }
+
+  const onJoinRoom = ({
+    lobbyName,
+    username,
+  }: {
+    lobbyName: string;
+    username: string | undefined;
+  }) => ws.sendJsonMessage({ request: 'joinLobby', username, lobby_name: lobbyName });
 
   useEffect(() => {
     onGetLobbies();
@@ -29,8 +40,12 @@ export default function Home({ ws }: { ws: WS }) {
   }, []);
 
   useEffect(() => {
-    console.log(ws.lastJsonMessage);
-  }, [ws.lastJsonMessage]);
+    if (!ws?.lastMessage?.responseFor) {
+      !!ws?.lastMessage?.data && setLobbies(JSON.parse(String(ws?.lastMessage?.data)) as Lobby);
+    } else {
+      console.log(ws?.lastMessage);
+    }
+  }, [ws.lastMessage]);
 
   return (
     <>
@@ -57,16 +72,16 @@ export default function Home({ ws }: { ws: WS }) {
           >
             Create lobby
           </button>
-          <button
+          {/* <button
             type="button"
             className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
             onClick={onGetUsers}
             disabled={getUsersState !== ReadyState.OPEN}
           >
             Get users
-          </button>
+          </button> */}
         </div>
-        <LobbyList lobbies={ws.lastJsonMessage} />
+        <LobbyList lobbies={lobbies} onJoinRoom={onJoinRoom} />
         {/* {lastMessage ? <span>Last message: {lastMessage.data}</span> : null} */}
         {/* <ul>
             {lobbies.map((message, idx) => (

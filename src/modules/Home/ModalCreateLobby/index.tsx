@@ -15,7 +15,6 @@ export default function ModalCreateLobby({
   const [lobbyName, setLobbyName] = useState('');
 
   const onModalClose = () => {
-    setLobbyName('');
     onClose();
   };
 

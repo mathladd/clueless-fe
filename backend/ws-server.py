@@ -150,7 +150,8 @@ async def join_lobby(json_object):
     if username not in waiting_room_connections.keys():
         response = {
             "success": "false",
-            "message": "User is not in waiting_room_connections list"
+            "message": "User is not in waiting_room_connections list",
+            "responseFor": "joinLobby"
         }
     # Check for existing lobby
     elif lobby_name in lobbies.keys() and len(lobbies[lobby_name].players) < max_lobby_count:

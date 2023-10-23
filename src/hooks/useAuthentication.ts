@@ -30,8 +30,11 @@ export default function useAuthentication({ ws }: { ws?: WS }) {
   };
 
   useEffect(() => {
-    if (ws?.lastJsonMessage !== null) {
-      const data = ws?.lastJsonMessage;
+    if (ws?.lastMessage?.data) {
+      const data = JSON.parse(String(ws?.lastMessage?.data)) as {
+        success: string;
+        message: string;
+      };
       if (
         data?.success === 'true' ||
         (data?.message === 'User already exists' && !!username && !!password)
@@ -39,7 +42,7 @@ export default function useAuthentication({ ws }: { ws?: WS }) {
         signIn('credentials', { username, password, redirect: true, callbackUrl: PATH.HOME });
       }
     }
-  }, [ws?.lastJsonMessage, username, password]);
+  }, [ws?.lastMessage, username, password]);
 
   return {
     user: session?.user,
