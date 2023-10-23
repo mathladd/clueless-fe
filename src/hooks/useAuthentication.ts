@@ -1,18 +1,13 @@
 import { signIn, signOut, useSession } from 'next-auth/react';
-import useWebsocket, { ReadyState } from 'react-use-websocket';
+import { ReadyState } from 'react-use-websocket';
 import { useEffect, useState } from 'react';
 import { PATH } from 'config/paths';
+import { WS } from 'types/common';
 
-export default function useAuthentication() {
+export default function useAuthentication({ ws }: { ws?: WS }) {
   const { data: session } = useSession();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-
-  const {
-    sendMessage: createUser,
-    lastMessage: lastCreateUserRes,
-    readyState: createUserState,
-  } = useWebsocket('ws://localhost:8765');
 
   const login = ({
     usernameInput,
@@ -23,9 +18,11 @@ export default function useAuthentication() {
   }) => {
     setUsername(usernameInput);
     setPassword(passwordInput);
-    createUser(
-      JSON.stringify({ request: 'createUser', username: usernameInput, password: passwordInput }),
-    );
+    ws?.sendJsonMessage({
+      request: 'createUser',
+      username: usernameInput,
+      password: passwordInput,
+    });
   };
 
   const logout = () => {
@@ -33,11 +30,8 @@ export default function useAuthentication() {
   };
 
   useEffect(() => {
-    if (lastCreateUserRes !== null) {
-      const data = JSON.parse(String(lastCreateUserRes?.data)) as {
-        success: string;
-        message: string;
-      };
+    if (ws?.lastJsonMessage !== null) {
+      const data = ws?.lastJsonMessage;
       if (
         data?.success === 'true' ||
         (data?.message === 'User already exists' && !!username && !!password)
@@ -45,12 +39,12 @@ export default function useAuthentication() {
         signIn('credentials', { username, password, redirect: true, callbackUrl: PATH.HOME });
       }
     }
-  }, [lastCreateUserRes, username, password]);
+  }, [ws?.lastJsonMessage, username, password]);
 
   return {
     user: session?.user,
     login,
     logout,
-    isLoading: createUserState !== ReadyState.OPEN,
+    isLoading: ws?.readyState !== ReadyState.OPEN,
   };
 }

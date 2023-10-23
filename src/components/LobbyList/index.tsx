@@ -1,10 +1,10 @@
 import { Lobby } from 'types/lobby';
 
-export default function LobbyList({ lobbies }: { lobbies: { data: string }[] }) {
-  if (lobbies?.length <= 0) return null;
+export default function LobbyList({ lobbies }: { lobbies: Lobby }) {
+  if (Object.keys(lobbies).length <= 0) return null;
   return (
     <div className="flex flex-col space-y-5">
-      {Object.entries(JSON.parse(lobbies[0]?.data) as Lobby).map((lobby, index) => (
+      {Object.entries(lobbies).map((lobby, index) => (
         <div
           key={`${index + 1}`}
           className="bg-slate-900 text-white rounded-lg flex flex-col justify-between overflow-hidden min-h-32 w-80 cursor-pointer hover:brightness-125 transition"

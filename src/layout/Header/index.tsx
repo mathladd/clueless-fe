@@ -2,7 +2,7 @@ import { RESPONSIVE_PADDING_X, RESPONSIVE_PADDING_Y } from 'constants/stylings';
 import useAuthentication from 'hooks/useAuthentication';
 
 export default function Header() {
-  const { user } = useAuthentication();
+  const { user } = useAuthentication({});
   return (
     <div
       className={`sticky flex items-center justify-between h-fit w-full border-b border-gray-300 ${RESPONSIVE_PADDING_Y} ${RESPONSIVE_PADDING_X}`}

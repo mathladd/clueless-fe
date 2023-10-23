@@ -6,7 +6,7 @@ import useAuthentication from 'hooks/useAuthentication';
 export default function Footer() {
   const router = useRouter();
   const onSignupClick = () => router.push(PATH.LOGIN);
-  const { user, logout } = useAuthentication();
+  const { user, logout } = useAuthentication({});
   const onLogout = () => logout();
 
   return (

@@ -11,7 +11,7 @@ export default function ModalCreateLobby({
   onClose: () => void;
   onSubmit: ({ lobbyName, username }: { lobbyName: string; username: string | undefined }) => void;
 }) {
-  const { user } = useAuthentication();
+  const { user } = useAuthentication({});
   const [lobbyName, setLobbyName] = useState('');
 
   const onModalClose = () => {

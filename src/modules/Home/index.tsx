@@ -2,18 +2,35 @@ import { ReadyState } from 'react-use-websocket';
 import { useEffect, useState } from 'react';
 import LobbyList from 'components/LobbyList';
 import { RESPONSIVE_PADDING_X } from 'constants/stylings';
-import useLobby from 'hooks/useLobby';
 import useUsers from 'hooks/useUsers';
+import { WS } from 'types/common';
+import useAuthentication from 'hooks/useAuthentication';
 import ModalCreateLobby from './ModalCreateLobby';
 
-export default function Home() {
+export default function Home({ ws }: { ws: WS }) {
   const [isOpenModalCreateLobby, setIsOpenModalCreateLobby] = useState<boolean>(false);
+  const { user } = useAuthentication({ ws });
+  const [lobbies, setLobbies] = useState();
 
-  const { onCreateLobby, onGetLobbies, getLobbiesState, createLobbyState, lobbies } = useLobby();
+  const onCreateLobby = ({ lobbyName, username }) => {
+    ws.sendJsonMessage({ request: 'createLobby', username: user?.name, lobby_name: 'test' });
+  };
+  const onGetLobbies = () => {
+    ws.sendJsonMessage({ request: 'getLobbies' });
+  };
+  const getLobbiesState = () => {};
+  const createLobbyState = () => {};
+
   const { getUsersState, onGetUsers } = useUsers();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => onGetLobbies(), []);
+  useEffect(() => {
+    onGetLobbies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    console.log(ws.lastJsonMessage);
+  }, [ws.lastJsonMessage]);
 
   return (
     <>
@@ -28,15 +45,15 @@ export default function Home() {
             type="button"
             className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
             onClick={onGetLobbies}
-            disabled={getLobbiesState !== ReadyState.OPEN}
+            disabled={ws.readyState !== ReadyState.OPEN}
           >
-            {getLobbiesState === ReadyState.OPEN ? 'Get lobbies' : 'Loading...'}
+            {ws.readyState === ReadyState.OPEN ? 'Get lobbies' : 'Loading...'}
           </button>
           <button
             type="button"
             className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
             onClick={() => setIsOpenModalCreateLobby(true)}
-            disabled={createLobbyState !== ReadyState.OPEN}
+            disabled={ws.readyState !== ReadyState.OPEN}
           >
             Create lobby
           </button>
@@ -49,7 +66,7 @@ export default function Home() {
             Get users
           </button>
         </div>
-        <LobbyList lobbies={lobbies} />
+        <LobbyList lobbies={ws.lastJsonMessage} />
         {/* {lastMessage ? <span>Last message: {lastMessage.data}</span> : null} */}
         {/* <ul>
             {lobbies.map((message, idx) => (

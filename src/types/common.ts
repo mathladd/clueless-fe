@@ -1,3 +1,6 @@
+import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
+import { ReadyState } from 'react-use-websocket';
+
 export interface RegionalCurrencies {
   USD: string;
   VND: string;
@@ -28,4 +31,10 @@ export type ResWithPagination<T> = {
 
 export type Res<T> = {
   result: ResWithPagination<T>;
+};
+
+export type WS = {
+  sendJsonMessage: SendJsonMessage;
+  lastJsonMessage: unknown;
+  readyState: ReadyState;
 };

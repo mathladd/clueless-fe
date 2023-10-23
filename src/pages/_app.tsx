@@ -1,13 +1,22 @@
 import type { AppProps } from 'next/app';
 import { Session } from 'next-auth';
 import { ChakraProvider } from '@chakra-ui/react';
+import useWebsocket from 'react-use-websocket';
 import { SessionProvider } from 'next-auth/react';
 import Head from 'next/head';
 import BaseTheme from 'theme/base';
 import '../styles/globals.css';
 import { APP_NAME } from 'constants/common';
+import { WS } from 'types/common';
 
 function MyApp({ Component, pageProps, session }: AppProps & { session: Session }) {
+  const wsObj = useWebsocket('ws://localhost:8765');
+  const ws: WS = {
+    sendJsonMessage: wsObj.sendJsonMessage,
+    lastJsonMessage: wsObj.lastJsonMessage as unknown,
+    readyState: wsObj.readyState,
+  };
+
   return (
     <>
       <Head>
@@ -20,7 +29,7 @@ function MyApp({ Component, pageProps, session }: AppProps & { session: Session 
       </Head>
       <SessionProvider session={session}>
         <ChakraProvider theme={BaseTheme}>
-          <Component {...pageProps} />
+          <Component {...{ ...pageProps, ws }} />
         </ChakraProvider>
       </SessionProvider>
     </>

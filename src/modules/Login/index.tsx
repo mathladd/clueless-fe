@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import useAuthentication from 'hooks/useAuthentication';
+import { WS } from 'types/common';
 
-export default function Login() {
-  const { login, isLoading } = useAuthentication();
+export default function Login({ ws }: { ws: WS }) {
+  const { login, isLoading } = useAuthentication({ ws });
 
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');

@@ -1,10 +1,11 @@
 import BaseLayout from 'layout';
 import Home from 'modules/Home';
+import { WS } from 'types/common';
 
-function HomePage() {
+function HomePage({ ws }: { ws: WS }) {
   return (
     <BaseLayout>
-      <Home />
+      <Home ws={ws} />
     </BaseLayout>
   );
 }
