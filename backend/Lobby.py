@@ -9,7 +9,12 @@ class Lobby:
         self.name = name
         self.players = [host]
         self.ready_tracker = {}
+        # {
+        #     "dakota": False,
+        #     "shaheer": True
+        # }
         self.GameBoard = None
+        self.ready_tracker[host.username] = False
 
     # Add player object to list of players in lobby
     def add_player(self, player):
@@ -25,11 +30,19 @@ class Lobby:
     def get_ready_tracker(self):
         return self.ready_tracker
     
+    def get_websockets(self):
+        websockets = []
+        for player in self.players:
+            websockets.append(player.websocket)
+        return websockets
+
     def start_game(self):
         gameboard_data = {}
+
         self.GameBoard = GameBoard()
         gameboard_data["winning_combo"] = self.GameBoard.select_murder_scene()
         gameboard_data["player_cards"] = self.GameBoard.distribute_cards(self.players)
         gameboard_data["left_over_cards"] = self.GameBoard.left_over_cards
+
         # Return gameboard data
         return gameboard_data
