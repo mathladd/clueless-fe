@@ -40,10 +40,13 @@ export default function Home({ ws }: { ws: WS }) {
   }, []);
 
   useEffect(() => {
-    if (!ws?.lastMessage?.responseFor) {
-      !!ws?.lastMessage?.data && setLobbies(JSON.parse(String(ws?.lastMessage?.data)) as Lobby);
-    } else {
-      console.log(ws?.lastMessage);
+    if (ws?.lastMessage?.data) {
+      const data = JSON.parse(String(ws?.lastMessage?.data)) as Lobby;
+      if (!data?.responseFor) {
+        setLobbies(data);
+      } else {
+        console.log(ws?.lastMessage);
+      }
     }
   }, [ws.lastMessage]);
 
