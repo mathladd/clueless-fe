@@ -34,7 +34,7 @@
         "username": "Dakota"
     }
 
-    Response: 
+    Broadcast Response for waiting room connections: 
     {
         "success": "true",
         "lobbies": {
@@ -71,7 +71,7 @@
         "lobby_name": "These"
     }
 
-    Response:
+    Broadcast Response for lobby connections:
     {
         "success": "true",
         "message": "lobby_update",
@@ -92,12 +92,13 @@
         "username": "Dakota",
         "lobby_name": "These"
     }
-    Response:
+    Broadcast Response for lobby connections:
     {
         "success": "true",
         "ready_tracker": "{\n    \"Dakota\": true,\n    \"Shaheer\": false,\n    \"Duy\": false,\n    \"Anthony\": false\n}",
         "message": "player_ready_update"
     }
+
 # Start Game
     Request:
     {
@@ -105,7 +106,7 @@
         "username": "Dakota",
         "lobby_name": "These"
     }
-    Response:
+    Broadcast Response for lobby connections:
     {
         "success": "true",
         "message": "start_game",
