@@ -102,12 +102,14 @@ async def create_user(websocket, json_object):
             "success": "true",
             "lobbies": get_lobbies(),
             "lobby_count": len(lobbies),
-            "message": "user_created"
+            "message": "user_created",
+            "responseFor": "createUser"
         }
     else:
         response = {
             "success": "false",
-            "message": "User already exists"
+            "message": "User already exists",
+            "responseFor": "createUser"
         }
     return response
 
@@ -129,13 +131,15 @@ async def create_lobby(json_object):
             "lobbies": get_lobbies(),
             "lobby_count": len(lobbies),
             "created_lobby": l.name,
-            "message": "lobby_update"
+            "message": "lobby_update",
+            "responseFor": "createLobby"
         }
 
     else:
         response = {
             "success": "false",
-            "message": "lobby with name already exists"
+            "message": "lobby with name already exists",
+            "responseFor": "createLobby"
         }
     return response
 
@@ -163,7 +167,8 @@ async def join_lobby(json_object):
             "message": f"lobby_update",
             "lobby_name": lobby_name,
             "username": username,
-            "lobbies": get_lobbies()
+            "lobbies": get_lobbies(),
+            "responseFor": "joinLobby"
         }
 
         # TODO: BroadCast to everyone in lobby player has joined
@@ -172,7 +177,8 @@ async def join_lobby(json_object):
     else:
         response = {
             "success": "false",
-            "message": "lobby full" if len(lobbies['lobby_name'].players) else "lobby does not exist"
+            "message": "lobby full" if len(lobbies['lobby_name'].players) else "lobby does not exist",
+            "responseFor": "joinLobby"
         }
     return response
 
@@ -186,7 +192,8 @@ async def toggle_lobby_ready(json_object):
     response = {
         "success": "true",
         "ready_tracker": str(json.dumps(lobbies[lobby_name].get_ready_tracker(), indent = 4)),
-        "message": "player_ready_update"
+        "message": "player_ready_update",
+        "responseFor": "toggleReady"
     }
 
     return response
@@ -209,21 +216,24 @@ async def start_game(json_object):
                 response = {
                     "success": "false",
                     "message": "All players are not ready",
+                    "responseFor": "startGame"
                 }
-                return str(json.dumps(response, indent = 4))
+                return response
             
         # All players are ready
         gameboard_data = current_lobby.start_game()
         response = {
             "success": "true",
             "message": "start_game",
-            "gameboard_data": gameboard_data
+            "gameboard_data": gameboard_data,
+            "responseFor": "startGame"
         }
 
     else:
         response = {
             "success": "false",
             "message": "not enough players",
+            "responseFor": "startGame"
         }
         
     return response
