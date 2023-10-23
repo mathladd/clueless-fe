@@ -53,9 +53,11 @@ class GameBoard:
         self.winning_combo.append(self.room_cards.pop(0))
         self.winning_combo.append(self.characters.pop(0))
 
+        return self.winning_combo
+
     def distribute_cards(self, player_list):
         # combine all cards
-        all_cards = self.weapon_cards + self.room_cards
+        all_cards = self.weapon_cards + self.room_cards + self.characters
 
         # shuffle cards
         random.shuffle(all_cards)                                       # will need some error handling so one player wont egt only weapon cards
@@ -63,35 +65,20 @@ class GameBoard:
         total_cards = len(all_cards)
         total_players = len(player_list)
         player_and_cards = {}
-        #player_counter = 0
-
+        
+        # iterate over all players
         for player in player_list:
-            temp_cards = []
+            # add the top card into a players card list total_cards/total_players
             for i in range(total_cards/total_players):                  # amount of cards each player gets
-                self.characters[i].cards.temp_cards.append(all_cards.pop(0))
-                #player_list[i].cards.append(all_cards.pop(0))          # specific cards each players gets   
-                #player_counter += 1
+                player.cards.append(all_cards.pop(0))
             
             # {Dakota: ['knife', 'living room'], Shaheer: ['gun', 'balcony']}
-            player_and_cards[player] = temp_cards
-            temp_cards.clear()
+            player_and_cards[player.user_name] = player.cards
 
         if len(all_cards) > 0:
             self.left_over_cards = all_cards
 
-        # Get Gameboard Data
-        # return players names, cards
-        # return left over cards
-        
-        return_left_over_cards(self.left_over_cards )
+
         return player_and_cards
         # player_and_cards = player names + cards they have
-        # all_cards has all left over cards
-
-def return_left_over_cards(left_over):
-    return left_over
-    
-
-
-
-
+        # left_over_cards has all left over cards

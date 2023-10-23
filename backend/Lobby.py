@@ -23,12 +23,13 @@ class Lobby:
             self.ready_tracker[player_name] = True
     
     def get_ready_tracker(self):
-        return str(json.dumps(self.ready_tracker, indent = 4))
+        return self.ready_tracker
     
     def start_game(self):
+        gameboard_data = {}
         self.GameBoard = GameBoard()
-        self.GameBoard.select_murder_scene()
-        self.GameBoard.distribute_cards(self.players)
-
-        # choose winning combo
-    
+        gameboard_data["winning_combo"] = self.GameBoard.select_murder_scene()
+        gameboard_data["player_cards"] = self.GameBoard.distribute_cards(self.players)
+        gameboard_data["left_over_cards"] = self.GameBoard.left_over_cards
+        # Return gameboard data
+        return gameboard_data

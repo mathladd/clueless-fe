@@ -43,6 +43,9 @@ async def handler(websocket):
         elif json_object['request'] == 'toggleReady':
             response = await toggle_lobby_ready(json_object)
 
+        elif json_object['request'] == 'startGame':
+            response = await start_game(json_object)
+
         ## Debugging API Calls
         elif json_object['request'] == 'getUsers':
              response = await get_users()
@@ -165,25 +168,36 @@ async def toggle_lobby_ready(json_object):
 async def start_game(json_object):
     lobby_name = json_object['lobby_name']
     username = json_object['username']
+    current_lobby = lobbies[lobby_name]
+    response = None
+    # Check if the player list in the lobby is greater than 3
+    if len(current_lobby.players) > 3 and current_lobby.host.username is username:
+        ready_tracker = current_lobby.get_ready_tracker()
 
-    #needs rework, just need to fix line where json checks each username (line 172)
-    if len(lobbies) > 3:
-        for i in range(len(lobbies)):
-            if lobbies[lobby_name].get_ready_player(username):
-                continue
+        # Check if all players ready status is True
+        for key, val in ready_tracker.items():
+            if val is False:
+                response = {
+                    "success": "false",
+                    "message": "All players are not ready",
+                }
+                return str(json.dumps(response, indent = 4))
+            
+        # All players are ready
+        gameboard_data = current_lobby.start_game()
+        response = {
+            "success": "true",
+            "message": "Game has started",
+            "gameboard_data": gameboard_data
+        }
+
     else:
         response = {
             "success": "false",
             "message": "not enough players",
         }
         
-    response = {
-        "success": "true",
-        "message": "all players are ready",
-    }
-
     return str(json.dumps(response, indent = 4))
-
 
 async def get_users():
     usernames = []
