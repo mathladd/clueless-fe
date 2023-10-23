@@ -21,47 +21,72 @@ async def handler(websocket):
         response = None
         print("Message Recvd: " + message)
         json_object = json.loads(message)
-
-        # Every request should have a request for specific function
-
-        # add user to waiting_room_connections
+        send_to_requester = True
         if json_object['request'] == 'createUser':
             response = await create_user(websocket, json_object)
 
         elif json_object['request'] == 'createLobby':
-
             response = await create_lobby(json_object)
-
-            for key, val in waiting_room_connections.items():
-                 await val.send(response)
-            return
-                
+            if response["success"] == "true":
+                # broad cast to everyone in waiting room
+                await broad_cast(get_waiting_room_sockets(), str(json.dumps(response, indent = 4)))
+                # do not return since we have to send message to player
+                # who created lobby
 
         elif json_object['request'] == 'joinLobby':
             response = await join_lobby(json_object)
-
+            if response['success'] == 'true':
+                websockets = lobbies[json_object['lobby_name']].get_websockets()
+                await broad_cast(websockets, str(json.dumps(response, indent = 4)))
+                # return since we sent messages to all who are in lobby
+                send_to_requester = False
+                
         elif json_object['request'] == 'toggleReady':
             response = await toggle_lobby_ready(json_object)
+            if response['success'] == 'true':
+                websockets = lobbies[json_object['lobby_name']].get_websockets()
+                await broad_cast(websockets, str(json.dumps(response, indent = 4)))
+                # return since we sent messages to all who are in lobby
+                send_to_requester = False
 
         elif json_object['request'] == 'startGame':
             response = await start_game(json_object)
-
+            if response['success'] == 'true':
+                websockets = lobbies[json_object['lobby_name']].get_websockets()
+                await broad_cast(websockets, str(json.dumps(response, indent = 4)))
+                # return since we sent messages to all who are in lobby
+                send_to_requester = False
+            
         ## Debugging API Calls
         elif json_object['request'] == 'getUsers':
-             response = await get_users()
+             response = get_users()
 
         elif json_object['request'] == 'getLobbies':
-             response = await get_lobbies()
+             response = get_lobbies()
 
         # Not Implemented
         else:
             print("request not implemented")
-            response = "Not Implemented"
-        # response of request
-        print('Response: ' + response)
-        
-        await websocket.send(response)
+            response = {
+                "success": "false",
+                "message": "Not Implemented",
+            }
 
+        # response of request
+        print('Response: ' + str(json.dumps(response, indent = 4)))
+        if send_to_requester:
+            await websocket.send(str(json.dumps(response, indent = 4)))
+
+# broadcast to everyone in waiting room connections list
+async def broad_cast(websockets, response):
+    for socket in websockets:
+            await socket.send(response)
+
+def get_waiting_room_sockets():
+    websockets = []
+    for key, val in waiting_room_connections.items():
+        websockets.append(val.websocket)
+    return websockets
 
 async def create_user(websocket, json_object):
 
@@ -75,15 +100,16 @@ async def create_user(websocket, json_object):
 
         response = {
             "success": "true",
-            "lobbies": await get_lobbies(),
-            "lobby_count": len(lobbies)
+            "lobbies": get_lobbies(),
+            "lobby_count": len(lobbies),
+            "message": "user_created"
         }
     else:
         response = {
             "success": "false",
             "message": "User already exists"
         }
-    return str(json.dumps(response, indent = 4) )
+    return response
 
 async def create_lobby(json_object):
     # Check for existing lobby
@@ -100,9 +126,10 @@ async def create_lobby(json_object):
 
         response = {
             "success": "true",
-            "lobbies": await get_lobbies(),
+            "lobbies": get_lobbies(),
             "lobby_count": len(lobbies),
-            "created_lobby": l.name
+            "created_lobby": l.name,
+            "message": "lobby_update"
         }
 
     else:
@@ -110,7 +137,7 @@ async def create_lobby(json_object):
             "success": "false",
             "message": "lobby with name already exists"
         }
-    return str(json.dumps(response, indent = 4))
+    return response
 
 async def join_lobby(json_object):
     lobby_name = json_object['lobby_name']
@@ -133,7 +160,10 @@ async def join_lobby(json_object):
 
         response = {
             "success": "true",
-            "message": "player joined lobby {lobby_name}"
+            "message": f"lobby_update",
+            "lobby_name": lobby_name,
+            "username": username,
+            "lobbies": get_lobbies()
         }
 
         # TODO: BroadCast to everyone in lobby player has joined
@@ -144,7 +174,7 @@ async def join_lobby(json_object):
             "success": "false",
             "message": "lobby full" if len(lobbies['lobby_name'].players) else "lobby does not exist"
         }
-    return str(json.dumps(response, indent = 4))
+    return response
 
 async def toggle_lobby_ready(json_object):
     lobby_name = json_object['lobby_name']
@@ -155,14 +185,11 @@ async def toggle_lobby_ready(json_object):
 
     response = {
         "success": "true",
-        "message": "toggled ready status",
-        "ready_tracker": lobbies[lobby_name].get_ready_tracker
+        "ready_tracker": str(json.dumps(lobbies[lobby_name].get_ready_tracker(), indent = 4)),
+        "message": "player_ready_update"
     }
 
-    # TODO: BroadCast to everyone in lobby player has joined
-    # 
-
-    return str(json.dumps(response, indent = 4))
+    return response
 
 # Check if atleast 4 players are in and ALL players are ready
 async def start_game(json_object):
@@ -170,8 +197,10 @@ async def start_game(json_object):
     username = json_object['username']
     current_lobby = lobbies[lobby_name]
     response = None
+
     # Check if the player list in the lobby is greater than 3
-    if len(current_lobby.players) > 3 and current_lobby.host.username is username:
+    if len(current_lobby.players) > 3 and current_lobby.host.username == username:
+        
         ready_tracker = current_lobby.get_ready_tracker()
 
         # Check if all players ready status is True
@@ -187,7 +216,7 @@ async def start_game(json_object):
         gameboard_data = current_lobby.start_game()
         response = {
             "success": "true",
-            "message": "Game has started",
+            "message": "start_game",
             "gameboard_data": gameboard_data
         }
 
@@ -197,25 +226,32 @@ async def start_game(json_object):
             "message": "not enough players",
         }
         
-    return str(json.dumps(response, indent = 4))
+    return response
 
-async def get_users():
+def get_users():
     usernames = []
     for key, value in waiting_room_connections.items() :
         usernames.append(key)
-    return str(json.dumps(usernames, indent = 4))
+    return usernames
 
-async def get_lobbies():
+def get_lobbies():
     lobbies_data = {}
     for key, value in lobbies.items() :
         lobby_players = []
         for player in value.players:
             lobby_players.append(player.username)
         lobbies_data[key] = lobby_players
-    return str(json.dumps(lobbies_data, indent = 4))
+    return lobbies_data
+
+# Use task = asyncio.create_task(ping(websocket))
+async def ping(websocket):
+    while True:
+        await websocket.send('{"message":"PING"}')
+        print('------ ping')
+        await asyncio.sleep(5)
 
 async def main():
-    async with serve(handler, "localhost", 8765):
+    async with serve(handler, "localhost", 8765, ping_interval=None):
         await asyncio.Future()  # run forever
 
 asyncio.run(main())

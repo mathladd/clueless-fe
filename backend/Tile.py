@@ -1,6 +1,6 @@
 # Tiles for gameboard
 
-# A tile can be a room or not a room and just a tild in a hallway
+# A tile can be a room or not a room and just a tile in a hallway
 
 class Tile:
     def __init__(self, tile_name):

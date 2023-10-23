@@ -69,15 +69,14 @@ class GameBoard:
         # iterate over all players
         for player in player_list:
             # add the top card into a players card list total_cards/total_players
-            for i in range(total_cards/total_players):                  # amount of cards each player gets
+            for i in range(int(total_cards/total_players)):                  # amount of cards each player gets
                 player.cards.append(all_cards.pop(0))
             
             # {Dakota: ['knife', 'living room'], Shaheer: ['gun', 'balcony']}
-            player_and_cards[player.user_name] = player.cards
+            player_and_cards[player.username] = player.cards
 
         if len(all_cards) > 0:
             self.left_over_cards = all_cards
-
 
         return player_and_cards
         # player_and_cards = player names + cards they have
