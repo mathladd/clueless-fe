@@ -218,7 +218,7 @@ async def start_game(json_object):
                     "message": "All players are not ready",
                     "responseFor": "startGame"
                 }
-                return str(json.dumps(response, indent = 4))
+                return response
             
         # All players are ready
         gameboard_data = current_lobby.start_game()
