@@ -41,11 +41,19 @@ export default function Home({ ws }: { ws: WS }) {
 
   useEffect(() => {
     if (ws?.lastMessage?.data) {
-      const data = JSON.parse(String(ws?.lastMessage?.data)) as Lobby;
+      const data = JSON.parse(String(ws?.lastMessage?.data)) as {
+        data: any;
+        responseFor: string;
+        success: string;
+        message: string;
+      } & Lobby;
       if (!data?.responseFor) {
-        setLobbies(data);
-      } else {
-        console.log(ws?.lastMessage);
+        setLobbies(data as Lobby);
+      } else if (data?.responseFor === 'joinLobby') {
+        if (data?.success === 'true') {
+          console.log(ws?.lastMessage);
+        } else {
+        }
       }
     }
   }, [ws.lastMessage]);
