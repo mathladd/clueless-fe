@@ -35,11 +35,6 @@ export default function Home({ ws }: { ws: WS }) {
   }) => ws.sendJsonMessage({ request: 'joinLobby', username, lobby_name: lobbyName });
 
   useEffect(() => {
-    onGetLobbies();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     if (ws?.lastMessage?.data) {
       const data = JSON.parse(String(ws?.lastMessage?.data)) as {
         data: any;
