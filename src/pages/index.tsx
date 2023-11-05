@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import GameSession from 'components/GameSession';
 import { WS } from 'types/common';
 import { Lobby, UserReady } from 'types/lobby';
 import LobbyScreen from 'components/LobbyScreen';
 import useLobbyScreen from 'hooks/useLobbyScreen';
-import GameSession from 'components/GameSession/GameSession';
+
 function HomePage({ ws }: { ws: WS }) {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
