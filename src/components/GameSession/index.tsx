@@ -1,20 +1,14 @@
-import React from 'react';
+import React, { Component } from 'react';
 import GameBoard from '../GameBoard/GameBoard';
 import GameCards from '../GameCards/GameCards';
 import ClueSheet from '../ClueSheet/ClueSheet';
 import Styles from './GameSession.module.css';
+import { useState } from 'react';
+
 
 //API Request to get session users
-let sessionUsers = {
-    'Anthony': {
-        'turn' : false,
-        'position':  [0,0],
-        'cards':[],
-        'clueSheet':[],
-    }
-}
 
-function InitializeGame(users: any){
+function GameSession(users: any){
     for (const user in users){
         //;
     }
@@ -38,7 +32,7 @@ function InitializeGame(users: any){
     );
 }
 
-export default InitializeGame;
+export default GameSession;
 
 ///
 
