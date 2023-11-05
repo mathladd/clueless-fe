@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { WS } from 'types/common';
 import { Lobby, UserReady } from 'types/lobby';
 import LobbyScreen from 'components/LobbyScreen';
+import useLobbyScreen from 'hooks/useLobbyScreen';
 
 function HomePage({ ws }: { ws: WS }) {
   const [usernameInput, setUsernameInput] = useState('');
@@ -18,53 +19,8 @@ function HomePage({ ws }: { ws: WS }) {
   }>();
   const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
 
-  const onLogin = ({ username, password }: { username: string; password: string }) => {
-    ws?.sendJsonMessage({
-      request: 'createUser',
-      username,
-      password,
-    });
-  };
-  const onCreateLobby = ({
-    lobbyName,
-    username,
-  }: {
-    lobbyName: string;
-    username: string | undefined;
-  }) => {
-    ws.sendJsonMessage({ request: 'createLobby', username, lobby_name: lobbyName });
-  };
-  const onGetLobbies = () => {
-    ws.sendJsonMessage({ request: 'getLobbies' });
-  };
-
-  const onStartGame = ({
-    lobbyName,
-    username,
-  }: {
-    lobbyName: string;
-    username: string | undefined;
-  }) => {
-    ws.sendJsonMessage({ request: 'startGame', username, lobby_name: lobbyName });
-  };
-
-  const onToggleReady = ({
-    lobbyName,
-    username,
-  }: {
-    lobbyName: string;
-    username: string | undefined;
-  }) => {
-    ws.sendJsonMessage({ request: 'toggleReady', username, lobby_name: lobbyName });
-  };
-
-  const onJoinRoom = ({
-    lobbyName,
-    username,
-  }: {
-    lobbyName: string;
-    username: string | undefined;
-  }) => ws.sendJsonMessage({ request: 'joinLobby', username, lobby_name: lobbyName });
+  const { onLogin, onCreateLobby, onGetLobbies, onJoinRoom, onToggleReady, onStartGame } =
+    useLobbyScreen({ ws });
 
   useEffect(() => {
     if (ws?.lastMessage?.data) {
