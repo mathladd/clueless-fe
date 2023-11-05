@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ReadyState } from 'react-use-websocket';
-import BaseLayout from 'layout';
-import Wrapper from 'layout/Wrapper';
-import Home from 'modules/Home';
 import { WS } from 'types/common';
 import { Lobby } from 'types/lobby';
-import Login from './login';
+import LoginInputs from 'components/LoginInputs';
+
+type UserReady = { [key: string]: string };
 
 function HomePage({ ws }: { ws: WS }) {
   const [usernameInput, setUsernameInput] = useState('');
@@ -15,7 +14,7 @@ function HomePage({ ws }: { ws: WS }) {
   const [room, setRoom] = useState<string>();
   const [user, setUser] = useState('');
   const [isReady, setIsReady] = useState(false);
-  const [allUsersStatus, setAllUserStatus] = useState();
+  const [allUsersStatus, setAllUserStatus] = useState<UserReady>();
   const [userMess, setUserMess] = useState<{
     message: string;
     type: 'SUCCESS' | 'ERROR' | 'INFO';
@@ -73,64 +72,82 @@ function HomePage({ ws }: { ws: WS }) {
 
   useEffect(() => {
     if (ws?.lastMessage?.data) {
-      const data = JSON.parse(String(ws?.lastMessage?.data));
+      const data = JSON.parse(String(ws?.lastMessage?.data)) as {
+        responseFor?: string;
+        success?: string;
+        message?: string;
+
+        created_lobby?: string;
+        lobby_name?: string;
+        username?: string;
+        ready_tracker?: string;
+      };
       if (!data?.responseFor) {
+        // This ws last message is about getting the list of Lobbies
         setLobbies(data as Lobby);
       } else if (data?.responseFor === 'createUser') {
+        // This ws last message is about a new user has been created
         setUser(usernameInput);
         setUserMess({
           message: `You have successfully created a user! You are "${usernameInput}"`,
           type: 'SUCCESS',
         });
       } else if (data?.responseFor === 'createLobby') {
+        // This ws last message is about a new lobby has been attempted to get created
         if (data?.success === 'true') {
+          // This ws last message is about a new lobby has been successfully created
           setRoom(lobbyNameInput);
           setUserMess({
-            message: `A new room named ${data.created_lobby} has been successfully created! ${
+            message: `A new room named ${data.created_lobby ?? ''} has been successfully created! ${
               lobbyNameInput ? `You are now in room ${lobbyNameInput}` : ''
             }`,
             type: 'SUCCESS',
           });
           onGetLobbies();
         } else {
+          // This ws last message is about a new lobby has failed to be created
           setUserMess({
-            message: `Failed to create a new room because of ${data.message}`,
+            message: `Failed to create a new room because of ${data.message ?? ''}`,
             type: 'ERROR',
           });
         }
         // onGetLobbies();
       } else if (data?.responseFor === 'joinLobby') {
+        // This ws last message is about a new player has joined the room
         if (data?.success === 'true') {
-          onToggleReady({ username: user, lobbyName: data.lobby_name });
+          onToggleReady({ username: user, lobbyName: data.lobby_name ?? '' });
           setRoom(data.lobby_name);
           setUserMess({
-            message: `${data.username} has now joined room ${data.lobby_name}`,
+            message: `${data.username ?? ''} has now joined room ${data.lobby_name ?? ''}`,
             type: 'SUCCESS',
           });
         } else {
           setUserMess({
-            message: `Failed to join room because of ${data.message}`,
+            message: `Failed to join room because of ${data.message ?? ''}`,
             type: 'ERROR',
           });
         }
       } else if (data?.responseFor === 'toggleReady') {
+        // This ws last message is about a new player has toggled ready state
         if (data?.success === 'true') {
-          const status = JSON.parse(data.ready_tracker)[user];
+          const tracker = JSON.parse(data.ready_tracker ?? '') as UserReady;
+          const status = tracker[user] as unknown as boolean;
           setIsReady(status);
-          setAllUserStatus(JSON.parse(data.ready_tracker));
+          setAllUserStatus(tracker);
           setUserMess({
-            message: `The current users are ${Object.keys(
-              JSON.parse(data.ready_tracker),
-            )}. You are now ${status ? 'READY' : 'NOT READY'}`,
+            message: `The current users are ${String(Object.keys(tracker))}. You are now ${
+              status ? 'READY' : 'NOT READY'
+            }`,
             type: 'INFO',
           });
         } else {
           setUserMess({
-            message: `Failed to join room because of ${data.message}`,
+            message: `Failed to join room because of ${data.message ?? ''}`,
             type: 'ERROR',
           });
         }
       } else if (data?.responseFor === 'startGame') {
+        // This ws last message is about a new game has been started
         if (data?.success === 'true') {
           console.log(data);
           setUserMess({
@@ -139,15 +156,16 @@ function HomePage({ ws }: { ws: WS }) {
           });
         } else {
           setUserMess({
-            message: `Failed to start game because of ${data.message}`,
+            message: `Failed to start game because of ${data.message ?? ''}`,
             type: 'ERROR',
           });
         }
+      } else if (data?.responseFor === 'cardShuffled') {
+        // This ws last message is about the game has been initialized cards being shuffled
+        console.log(data);
       }
     }
   }, [ws.lastMessage]);
-
-  console.log(ws?.lastMessage);
 
   return (
     <div className="flex flex-col space-y-8 p-2">
@@ -169,23 +187,7 @@ function HomePage({ ws }: { ws: WS }) {
           {ws.readyState === ReadyState.OPEN ? 'Get lobbies' : 'Loading...'}
         </button>
 
-        <div className="flex flex-col space-y-2">
-          <div className="flex space-x-2 h-fit items-center justify-between text-sm">
-            <div className="text-sm text-slate-500">Username</div>
-            <input
-              className="w-40 border border-slate-600 rounded-md p-2"
-              onChange={(e) => setUsernameInput(e.target.value)}
-            />
-          </div>
-          <div className="flex space-x-2 h-fit items-center justify-between text-sm">
-            <div className="text-sm text-slate-500">Password</div>
-            <input
-              type="password"
-              className="w-40 border border-slate-600 rounded-md p-2"
-              onChange={(e) => setPasswordInput(e.target.value)}
-            />
-          </div>
-        </div>
+        <LoginInputs setUsernameInput={setUsernameInput} setPasswordInput={setPasswordInput} />
         {/* <button
               type="button"
               className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
@@ -248,7 +250,7 @@ function HomePage({ ws }: { ws: WS }) {
         )}
       </div>
       <div className="flex flex-col space-y-2">
-        <div className={typeMapping[userMess?.type]}>{userMess?.message}</div>
+        <div className={typeMapping[userMess?.type ?? 'INFO']}>{userMess?.message}</div>
         <div>{!!ws?.lastMessage && JSON.parse(JSON.stringify(ws?.lastMessage.data))}</div>
       </div>
       <div className="flex items-center space-x-2">
