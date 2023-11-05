@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ReadyState } from 'react-use-websocket';
 import { WS } from 'types/common';
-import { Lobby } from 'types/lobby';
-import LoginInputs from 'components/LoginInputs';
-
-type UserReady = { [key: string]: string };
+import { Lobby, UserReady } from 'types/lobby';
+import LobbyScreen from 'components/LobbyScreen';
 
 function HomePage({ ws }: { ws: WS }) {
   const [usernameInput, setUsernameInput] = useState('');
@@ -19,8 +16,7 @@ function HomePage({ ws }: { ws: WS }) {
     message: string;
     type: 'SUCCESS' | 'ERROR' | 'INFO';
   }>();
-
-  const typeMapping = { SUCCESS: 'text-emerald-500', ERROR: 'text-red-500', INFO: 'text-blue-500' };
+  const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
 
   const onLogin = ({ username, password }: { username: string; password: string }) => {
     ws?.sendJsonMessage({
@@ -92,6 +88,7 @@ function HomePage({ ws }: { ws: WS }) {
           message: `You have successfully created a user! You are "${usernameInput}"`,
           type: 'SUCCESS',
         });
+        onGetLobbies();
       } else if (data?.responseFor === 'createLobby') {
         // This ws last message is about a new lobby has been attempted to get created
         if (data?.success === 'true') {
@@ -149,12 +146,13 @@ function HomePage({ ws }: { ws: WS }) {
       } else if (data?.responseFor === 'startGame') {
         // This ws last message is about a new game has been started
         if (data?.success === 'true') {
-          console.log(data);
+          setIsGameStarted(true);
           setUserMess({
             message: `The game is now started`,
             type: 'INFO',
           });
         } else {
+          setIsGameStarted(false);
           setUserMess({
             message: `Failed to start game because of ${data.message ?? ''}`,
             type: 'ERROR',
@@ -168,127 +166,34 @@ function HomePage({ ws }: { ws: WS }) {
   }, [ws.lastMessage]);
 
   return (
-    <div className="flex flex-col space-y-8 p-2">
-      <div className="flex space-x-2">
-        <button
-          type="button"
-          className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
-          onClick={() => onLogin({ username: usernameInput, password: passwordInput })}
-          disabled={ws.readyState !== ReadyState.OPEN}
-        >
-          Login
-        </button>
-        <button
-          type="button"
-          className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
-          onClick={onGetLobbies}
-          disabled={ws.readyState !== ReadyState.OPEN}
-        >
-          {ws.readyState === ReadyState.OPEN ? 'Get lobbies' : 'Loading...'}
-        </button>
-
-        <LoginInputs setUsernameInput={setUsernameInput} setPasswordInput={setPasswordInput} />
-        {/* <button
-              type="button"
-              className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
-              onClick={onGetUsers}
-              disabled={getUsersState !== ReadyState.OPEN}
-            >
-              Get users
-            </button> */}
-      </div>
-      <div className="flex flex-col">
-        <div className="flex space-x-3 font-bold">
-          <div>Current user: </div>
-          <div>{user}</div>
-        </div>
-        {!!user && (
-          <>
-            <div className="flex space-x-3 font-bold">
-              <div>Current room: </div>
-              <div>{room ?? ''}</div>
-            </div>
-            {!!room && (
-              <div className="flex flex-col space-y-2">
-                <div className="flex space-x-3 font-bold items-center">
-                  <div>Current state: </div>
-                  <div className={isReady ? 'text-emerald-500' : 'text-slate-700'}>
-                    {isReady ? 'READY' : 'NOT READY'}
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
-                    onClick={() => onToggleReady({ username: user, lobbyName: room })}
-                    disabled={ws.readyState !== ReadyState.OPEN}
-                  >
-                    Toggle ready
-                  </button>
-                </div>
-                <div className="flex flex-col space-y-2">
-                  <div>All users status:</div>
-                  <div>
-                    {!!allUsersStatus &&
-                      Object.entries(allUsersStatus).map((item) => (
-                        <div className="flex space-x-2">
-                          <div>{item[0]}</div>
-                          <div>{item[1] ? 'READY' : 'NOT READY'}</div>
-                        </div>
-                      ))}
-                  </div>
-                  <button
-                    type="button"
-                    className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
-                    onClick={() => onStartGame({ username: user, lobbyName: room })}
-                    disabled={ws.readyState !== ReadyState.OPEN}
-                  >
-                    Start game
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-      <div className="flex flex-col space-y-2">
-        <div className={typeMapping[userMess?.type ?? 'INFO']}>{userMess?.message}</div>
-        <div>{!!ws?.lastMessage && JSON.parse(JSON.stringify(ws?.lastMessage.data))}</div>
-      </div>
-      <div className="flex items-center space-x-2">
-        <div>New lobby name</div>
-        <input
-          className="w-40 border border-slate-600 rounded-md p-2"
-          onChange={(e) => setLobbyNameInput(e.target.value)}
+    <>
+      {isGameStarted ? (
+        <div />
+      ) : (
+        <LobbyScreen
+          ws={ws}
+          user={user}
+          room={room}
+          lobbies={lobbies}
+          isReady={isReady}
+          onLogin={onLogin}
+          usernameInput={usernameInput}
+          passwordInput={passwordInput}
+          lobbyNameInput={lobbyNameInput}
+          userMess={userMess}
+          setUsernameInput={setUsernameInput}
+          setPasswordInput={setPasswordInput}
+          setLobbyNameInput={setLobbyNameInput}
+          onGetLobbies={onGetLobbies}
+          onJoinRoom={onJoinRoom}
+          onCreateLobby={onCreateLobby}
+          onToggleReady={onToggleReady}
+          allUsersStatus={allUsersStatus}
+          onStartGame={onStartGame}
         />
-        <button
-          type="button"
-          className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
-          onClick={() => onCreateLobby({ username: user, lobbyName: lobbyNameInput })}
-          disabled={ws.readyState !== ReadyState.OPEN}
-        >
-          Create lobby
-        </button>
-      </div>
-      {!lobbies || Object.keys(lobbies).length <= 0 ? null : (
-        <div className="flex flex-col space-y-5">
-          {Object.entries(lobbies).map((lobby, index) => (
-            <button
-              type="button"
-              key={`${index + 1}`}
-              className="bg-slate-900 text-white rounded-lg flex flex-col justify-between overflow-hidden min-h-32 w-80 cursor-pointer hover:brightness-125 transition text-start"
-              onClick={() => onJoinRoom({ lobbyName: lobby[0], username: user })}
-            >
-              <div className="text-3xl p-4 w-full font-bold">
-                {index + 1}. {String(lobby[0] ?? '')}
-              </div>
-              <div className="bg-slate-600 flex-1 p-4 w-full">
-                <div className="text-lg text-slate-300 font-bold">Players</div>
-                <div className="text-sm text-slate-100">{String(lobby[1] ?? '')}</div>
-              </div>
-            </button>
-          ))}
-        </div>
       )}
-    </div>
+      <div />
+    </>
   );
 }
 

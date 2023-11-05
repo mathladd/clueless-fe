@@ -13,7 +13,7 @@ function MyApp({ Component, pageProps, session }: AppProps & { session: Session 
   const wsObj = useWebsocket('ws://localhost:8765');
   const ws: WS = {
     sendJsonMessage: wsObj.sendJsonMessage,
-    lastMessage: wsObj.lastMessage as unknown,
+    lastMessage: wsObj.lastMessage as unknown as { data: any; responseFor: string },
     readyState: wsObj.readyState,
   };
 
