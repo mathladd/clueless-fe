@@ -1,0 +1,11 @@
+  .container {
+    padding: 2px 16px;
+  }
+
+  .flexgroup {
+    display: flex;
+    column-gap: 10px;
+
+  }
+
+  
