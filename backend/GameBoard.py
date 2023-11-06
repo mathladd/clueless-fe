@@ -29,8 +29,13 @@ class GameBoard:
 
     def setup_board(self):
         None
+        room_cords[(0,0), (0,9), (9,0), (9,9)]
+
         # for loop over board
-        # assign rooms to specific coords
+        #     if coords is in room_cords
+        #         assign rooms to specific coords
+        #     else
+        #         assign as a regular hallway tile
         # Response {
         #   "0,0": {
         #           "name": kitchen,
