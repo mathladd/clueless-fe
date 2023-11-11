@@ -1,17 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { ReadyState } from 'react-use-websocket';
+import { WS } from 'types/common';
+import { Lobby } from 'types/lobby';
 import GameBoard from '../GameBoard/GameBoard';
 import GameCards from '../GameCards/GameCards';
 import ClueSheet from '../ClueSheet/ClueSheet';
 import Styles from './GameSession.module.css';
-import { useEffect, useState } from 'react';
-import { ReadyState } from 'react-use-websocket';
-import { WS } from 'types/common';
-import { Lobby } from 'types/lobby';
 
 // API Request to get session users
 
-function GameSession({ws, lobby}:{ws:WS, lobby: any}) {
-
+function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
   useEffect(() => {
     if (ws?.lastMessage?.data) {
       const data = JSON.parse(String(ws?.lastMessage?.data)) as {
@@ -24,15 +22,38 @@ function GameSession({ws, lobby}:{ws:WS, lobby: any}) {
         username?: string;
         ready_tracker?: string;
       };
-      console.log("example", data)
+      console.log('example', data);
     }
   }, [ws.lastMessage]);
 
+  const onButton1Click = () => {
+    ws?.sendJsonMessage({
+      request: 'createUser',
+      username: 'Duy',
+      password: 'asfasdfa',
+    });
+  };
 
-
+  const onButton2Click = () => {
+    ws.sendJsonMessage({ request: 'getUsers' });
+  };
 
   return (
     <div>
+      <button
+        type="button"
+        className="p-3 bg-orange-500 text-white rounded-lg"
+        onClick={onButton1Click}
+      >
+        Login
+      </button>
+      <button
+        type="button"
+        className="p-3 bg-orange-500 text-white rounded-lg"
+        onClick={onButton2Click}
+      >
+        Testing
+      </button>
       <div style={{ alignItems: 'center' }}>
         <div className={Styles.flexgroup}>
           <div style={{ width: '25%' }}>
