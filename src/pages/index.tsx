@@ -12,7 +12,8 @@ function HomePage({ ws }: { ws: WS }) {
   return (
     <>
       {isGameStarted || true ? (
-        <GameSession />
+        <GameSession ws = {ws}
+                    lobby = {"example lobby"}/>
       ) : (
         <LobbyScreen ws={ws} setIsGameStarted={setIsGameStarted} />
       )}

@@ -11,7 +11,8 @@ export default function ClueSheet(){
                     <th colSpan={2} className={Styles.tablecell}>Who?</th>
                 </tr>
                 <tr >
-                <td className={Styles.tablecell}>Test</td>
+                    <td className={Styles.tablecell}>Test</td>
+                    <td className={Styles.tablecell}><input type="checkbox"/></td>
                     <td className={Styles.tablecell}><input type="checkbox"/></td>
                 </tr>
                 <tr>
