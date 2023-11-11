@@ -3,7 +3,7 @@ import { ReadyState } from "react-use-websocket";
 import { WS } from "types/common";
 import { Lobby } from "types/lobby";
 import GameBoard from "../GameBoard/GameBoard";
-import GameCards from "../GameCards/GameCards";
+import GameCards from "../GameCards/index";
 import ClueSheet from "../ClueSheet/ClueSheet";
 import DiceModal from "../DiceModal/index";
 import Navbar from "components/Navbar";
@@ -27,7 +27,6 @@ type Player = {
   status: string;
   role: number;
 };
-
 let p1: Player = {
   id: 0,
   username: "Math_Lad",
@@ -37,7 +36,6 @@ let p1: Player = {
   status: "unblocked",
   role: 0,
 };
-
 let p2 : Player = {
   id: 1,
   username: "Shaheer",
@@ -56,7 +54,6 @@ let p3 : Player = {
   status: "unblocked",
   role: 0,
 };
-
 let p4 : Player = {
   id: 3,
   username: "Puggp_03",
@@ -66,7 +63,6 @@ let p4 : Player = {
   status: "unblocked",
   role: 0,
 };
-
 let p5 : Player = {
   id: 4,
   username: "Hasheem",
@@ -76,7 +72,6 @@ let p5 : Player = {
   status: "unblocked",
   role: 0,
 };
-
 let sessionUsers: any = [];
 let currentPlayerTurn: number;
 let gameBoard: any;
@@ -84,12 +79,32 @@ let userID: 0;
 let actingPlayersView: any;
 // API Request to get session users
 
+function getNextUser(currantPlayer:any): any{
+  if(sessionUsers.indexOf(currantPlayer) != sessionUsers.length - 1 ){
+    const next = sessionUsers[sessionUsers.indexOf(currantPlayer) + 1];
+    console.log("Next Player ", sessionUsers[sessionUsers.indexOf(currantPlayer ) + 1]);
+    currantPlayer.turn = false;
+    next.turn = true;
+    return(next)
+  }
+  else{
+    currantPlayer.turn = false;
+    sessionUsers[0].turn = true;
+    return(sessionUsers[0])
+  }
+}
+
+function getPlayerCardDeck(id: number): any{
+  return sessionUsers.filter((user:any) => {return user.id == id})[0]?.cards;
+}
+
+
 function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
   const [playerTurn, setPlayerTurn] = useState<Player>();
   const [gameStarted, startGame] = useState(false);
   const [playerTurnComplete, setTurnComplete] = useState(false);
   const [gameState, setGameState] = useState("initialize_game");
-  const [playerRole, setPlayerRole] = useState(0);
+  const [DiceRole, setDiceRole] = useState(0);
   const [playerId, setPlayerId] = useState(0);
 
   useEffect(() => {
@@ -111,32 +126,27 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
       }
     }
     if (gameStarted == true) {
-      console.log("start", sessionUsers);
-      console.log("start", playerTurn);
       if (gameState == "initialize_game") {
         sessionUsers.push(p1, p2, p3, p4, p5);
-        console.log("Players Set");
-        console.log(sessionUsers);
-        setGameState("diceRole");
         setPlayerTurn(sessionUsers[0]);
-        setPlayerRole(0);
+        sessionUsers[0].turn == true;
+        setDiceRole(0);
+        setGameState("diceRole");
+  
       } 
       else if (gameState == "diceRole") {
-        console.log('users', sessionUsers);
-        console.log("player", playerTurn);
-        console.log("dice", playerRole);
-        if (playerTurn?.role === 0 && playerRole > 0) {
-          playerTurn.role = playerRole;
-          console.log("Changing Player Dice Role");
-          console.log(playerTurn);
+        if (playerTurn?.role === 0 && DiceRole > 0) {
+          playerTurn.role = DiceRole;
           if (sessionUsers.indexOf(playerTurn) != sessionUsers.length) {
-            setPlayerRole(0);
-            setPlayerTurn(sessionUsers[sessionUsers.indexOf(playerTurn) + 1]);
+            setPlayerTurn( getNextUser(playerTurn));
+            setDiceRole(0);
           } else {
             setGameState("turnCycle");
           }
         }
+        console.log(sessionUsers);
       } else if (gameState == "turnCycle") {
+        console.log(sessionUsers);
         console.log("NextTurn Cycle");
       }
     }
@@ -181,7 +191,7 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
         <input value={playerId} readOnly />
       </div>
       <div>
-        <Navbar />
+      <Navbar />
       </div>
       <div>
         <UserRibbon users ={sessionUsers}/>
@@ -195,15 +205,15 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
             <GameBoard />
             {playerId === playerTurn?.id && gameState == "diceRole" ? (
               <DiceModal
-                inputValue={playerRole}
-                onInputValueChange={setPlayerRole}
+                inputValue={DiceRole}
+                onInputValueChange={setDiceRole}
               />
             ) : (
               ""
             )}
           </div>
           <div style={{ width: "25%" }}>
-            <GameCards />
+            <GameCards cardDeck={getPlayerCardDeck(playerId)} />
           </div>
         </div>
       </div>
@@ -220,4 +230,80 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
 
 export default GameSession;
 
-///
+
+
+
+
+
+
+
+/// Ignore the sample code below was thinking it would be good to restructure the layout!
+
+// <Container>
+
+//       <Row>
+//         <Col>
+//           <Navbar />
+//         </Col>
+//       </Row>
+//       <Row>
+//         <Col>
+//           <UserRibbon users ={sessionUsers}/>
+//         </Col>
+//       </Row>
+
+//       <Row>
+//         <Col xs={6} md={4}>
+//           <div>
+//             <GameCards cardDeck={getPlayerCardDeck(playerId)} />
+//           </div>
+//           <div>
+//             <ClueSheet />
+//           </div>
+//         </Col>
+//         <Col xs={6} md={4}>
+//           <GameBoard />
+//           {playerId === playerTurn?.id && gameState == "diceRole" ? (
+//               <DiceModal
+//                 inputValue={DiceRole}
+//                 onInputValueChange={setDiceRole}
+//               />
+//             ) : (
+//               ""
+//             )}
+//         </Col>
+//         <Col xs={6} md={4}>
+//           <div>
+//             <Button /> 
+//           </div>
+//           <div>
+//             <Button /> 
+//           </div>
+//         </Col>
+//       </Row>
+
+//       {/* Columns are always 50% wide, on mobile and desktop */}
+//       <Row>
+//         <Col xs={6}>xs=6</Col>
+//         <Col xs={6}>xs=6</Col>
+//       </Row>
+//     </Container>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
