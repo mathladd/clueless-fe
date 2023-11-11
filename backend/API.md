@@ -10,7 +10,8 @@
         "success": "true",
         "lobbies": {},
         "lobby_count": 0,
-        "message": "user_created"
+        "message": "user_created",
+        "responseFor": "createUser"
     }
 
 # Get All Users in Waiting Room
@@ -23,7 +24,7 @@
         "Dakota",
         "Shaheer",
         "Duy",
-        "Anthony"
+        "Anthony",
     ]
 
 # Create Lobby
@@ -44,7 +45,8 @@
         },
         "lobby_count": 1,
         "created_lobby": "These",
-        "message": "lobby_update"
+        "message": "lobby_update",
+        "responseFor": "createLobby"
     }
 
 # Get Lobbies
@@ -82,7 +84,8 @@
                 "Dakota",
                 "Shaheer"
             ]
-        }
+        },
+        "responseFor": "joinLobby"
     }
 
 # Toggle Ready
@@ -96,7 +99,8 @@
     {
         "success": "true",
         "ready_tracker": "{\n    \"Dakota\": true,\n    \"Shaheer\": false,\n    \"Duy\": false,\n    \"Anthony\": false\n}",
-        "message": "player_ready_update"
+        "message": "player_ready_update",
+        "responseFor": "toggleReady"
     }
 
 # Start Game
@@ -134,5 +138,6 @@
                 "Dakota",
                 "gun"
             ]
-        }
+        },
+        "responseFor": "startGame"
     }
