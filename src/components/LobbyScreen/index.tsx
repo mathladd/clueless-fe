@@ -9,16 +9,22 @@ import useLobbyScreen from 'hooks/useLobbyScreen';
 export default function LobbyScreen({
   ws,
   setIsGameStarted,
+  lobbies,
+  setLobbies,
+  user,
+  setUser,
 }: {
   ws: WS;
   setIsGameStarted: Dispatch<SetStateAction<boolean>>;
+  lobbies?: Lobby;
+  setLobbies: Dispatch<SetStateAction<Lobby | undefined>>;
+  user: string;
+  setUser: Dispatch<SetStateAction<string>>;
 }) {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [lobbyNameInput, setLobbyNameInput] = useState('');
-  const [lobbies, setLobbies] = useState<Lobby>();
   const [room, setRoom] = useState<string>();
-  const [user, setUser] = useState('');
   const [isReady, setIsReady] = useState(false);
   const [allUsersStatus, setAllUserStatus] = useState<UserReady>();
   const [userMess, setUserMess] = useState<{
