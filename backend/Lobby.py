@@ -80,29 +80,36 @@ class Lobby:
         highest_rolled = -1
         highest_roller = None
         
-        # Set used for tie detection
-        dice_set = set()
-        for key, val in self.dice_tracker.items():
-            if val not in dice_set:
-                dice_set.add(val)
-            else:
-                return {
-                    "highest_rolled": "tie",
-                    "diceTracker": self.dice_tracker
-                }
-
         for key, val in self.dice_tracker.items():
             if int(val) > int(highest_rolled):
                 highest_rolled = val
                 highest_roller = key
-                
+
+        highest_rolled_tie_counter = 0
+        for key, val in self.dice_tracker.items():
+            if int(val) == int(highest_rolled):
+                highest_rolled_tie_counter += 1
+        
+        if highest_rolled_tie_counter > 1:
+            # reset dice tracker
+            prev_dice_tracker = self.dice_tracker
+            self.dice_tracker = {}
+            return {
+                    "highest_rolled": "tie",
+                    "prev_dice_tracker": prev_dice_tracker,
+                    "diceTracker": self.dice_tracker
+                }
+        
         # Used for building turn queue
         self.dice_winner = highest_roller
 
+        print(self.dice_tracker)
         {k: v for k, v in sorted(self.dice_tracker.items(), key=lambda item: item[1])}
 
+        print(self.dice_tracker)
 
         for key, val in self.dice_tracker.items():
+            print(key)
             self.character_selection_order.append(key)
 
         return {
@@ -114,8 +121,8 @@ class Lobby:
 
     # Should not be hit if empty...
     def get_next_character_selector(self):
-        next_character = self.character_selection_order[len(self.character_selection_order) - 1]
-        del self.character_selection_order[len(self.character_selection_order) - 1]
+        next_character = self.character_selection_order[0]
+        del self.character_selection_order[0]
         return next_character
 
     def get_player(self, username):

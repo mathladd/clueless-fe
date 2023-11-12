@@ -96,13 +96,11 @@ async def handler(websocket):
                 next_roller = lobbies[json_object['lobby_name']].get_next_dice_roller()
 
                 # Kick off dice rolling phase
-                response =  {
-                    "responseFor": "rolledDice",
-                    "dicePhase": "startingDiceRoll",
-                    "currentTurn": next_roller,
-                    "diceTracker": lobbies[json_object['lobby_name']].dice_tracker
-                }
-            
+                response = result
+                response["currentTurn"] = next_roller
+                response["dicePhase"] = "startingDiceRoll"
+                response["responseFor"] = "rolledDice"
+      
             # if still rolling dice, send next plauer turn for dice roll
             elif result["dicePhase"] == "rollingDice":
                 response = result
