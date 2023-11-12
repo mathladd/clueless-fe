@@ -30,6 +30,9 @@ class GameBoard:
         
         # fill with room objects
         self.rooms = []
+        
+        # Assign to player object of who is currently suggesting
+        self.current_suggester = None
 
         # 2D Game room grid
         rows, cols = (5, 5)
@@ -45,13 +48,16 @@ class GameBoard:
             (4,0), (4,2), (4,4)
         ]
 
-
-
         # for loop over board
         #     if coords is in room_cords
         #         assign rooms to specific coords
         #     else
         #         assign as a regular hallway tile
+
+                    # new_tile = Tile("Hallway")
+                    # if a player is miss scarlet:
+                    #     new_tile.player.append(player.username)
+
         # Response {
         #   "0,0": {
         #           "name": kitchen,

@@ -89,8 +89,6 @@ Broadcast Message
 
 # After all character selection data sent, setup gameboard
 
-
-
 Broadcast Message
 {
     responseFor: currentTurn,
