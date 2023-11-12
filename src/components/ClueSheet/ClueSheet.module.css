@@ -1,8 +1,7 @@
 
 .tablecell{
-    border-bottom: 1px solid #ddd;
-    padding: 15px;
-    text-align: left;
+    text-align: center;
+    vertical-align: middle;
 }
 .tableheader{
   column-span: 2;

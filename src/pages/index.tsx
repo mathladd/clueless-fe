@@ -3,6 +3,7 @@ import GameSession from 'components/GameSession';
 import { WS } from 'types/common';
 import LobbyScreen from 'components/LobbyScreen';
 import { Lobby } from 'types/lobby';
+import 'bootstrap/dist/css/bootstrap.css';
 
 function HomePage({ ws }: { ws: WS }) {
   const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
@@ -16,7 +17,7 @@ function HomePage({ ws }: { ws: WS }) {
   return (
     <>
       {isGameStarted || true ? (
-        <GameSession />
+        <GameSession ws={ws} lobby={currentGameLobby} />
       ) : (
         <LobbyScreen
           ws={ws}
