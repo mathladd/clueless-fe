@@ -18,9 +18,6 @@ class Player:
         # Allow characters to choose in order or rolled dice.
         self.character = None
 
-        # Set to False if making accusaion
-        self.can_win = True
-
         # To be filled in after winning combo chosen
         self.cards = []
 

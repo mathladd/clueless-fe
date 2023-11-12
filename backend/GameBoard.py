@@ -1,14 +1,21 @@
 # Tiles are grid units on a board
 # Can be a room or hallyway tile
-import Tile
+from Tile import Tile
 import random
 
 class GameBoard:
     def __init__(self):
         # cards from game
-        self.weapon_cards = ['knife', 'gun']
-        self.room_cards = ['living room', 'kitchen', 'balcony']
-        self.characters = ['Anthony', 'Dakota', 'Duy', 'Shaheer']
+        self.weapon_cards = ['Candlestick', 'Dagger', 'Lead pipe', 
+                             'Revolver', 'Rope', 'Spanner']
+
+        self.room_cards = ['Kitchen', 'Ballroom', 'Conservatory', 
+                           'Dining Room', 'Library', 'Billard Room',
+                           'Lounge', 'Study', 'Hall']
+
+        self.characters = ['Miss Scarlett', 'Colonel Mustard', 
+                           'Mrs. White', 'Mr. Green', 
+                           'Mrs. Peacock', 'Professor Plum']
 
         self.winning_combo = [] 
 
@@ -20,33 +27,46 @@ class GameBoard:
         
         # fill with room objects
         self.rooms = []
+        
+        # Assign to player object of who is currently suggesting
+        self.current_suggester = None
 
         # 2D Game room grid
-        rows, cols = (5, 5)
-        self.game_board = [[0]*cols]*rows
+        self.rows, self.cols = (5, 5)
+        self.game_board = [[None for i in range(self.rows)] for i in range(self.cols)]
+        
+        # gameboard character order
+        self.game_board_character_order = [
+            "Miss Scarlett", "Colonel Mustard", 
+            "Mrs. White", "Mr. Green", 
+            "Mrs. Peacock", "Professor Plum"
+        ]
 
-        # Assign rooms to board
-
+    # Assign rooms to board
     def setup_board(self):
-        None
-        room_cords[(0,0), (0,9), (9,0), (9,9)]
+        room_array = [
+            ["Study", "Hallway", "Hall", "Hallway", "Lounge"],
+            ["Hallway", None, "Hallway", None, "Hallway"],
+            ["Library", "Hallway", "Billiard Room", "Hallway", "Dining Room"],
+            ["Hallway", None, "Hallway", None, "Hallway"],
+            ["Conservatory", "Hallway", "Ball-room", "Hallway", "Kitchen"]
+        ]
+        for i in range(self.rows):
+            for j in range(self.cols):
+                self.game_board[i][j] = Tile(room_array[i][j])
 
-        # for loop over board
-        #     if coords is in room_cords
-        #         assign rooms to specific coords
-        #     else
-        #         assign as a regular hallway tile
-        # Response {
-        #   "0,0": {
-        #           "name": kitchen,
-        #           "players": [],
-        #           "weapons": []
-        #        },
-        #   "0,1": {
-        #           "name": "hallway",
-        #           "players": ["Hashem"]
-        #        }
-        # }    
+        return self.get_gameboard()
+
+    def get_gameboard(self):
+        response = {}
+        for i in range(self.rows):
+            for j in range(self.cols):
+                response[str(i) + "," + str(j)] = {
+                    "name": self.game_board[i][j].tile_name,
+                    "players": self.game_board[i][j].players,
+                    "weapons": self.game_board[i][j].weapons,
+                }
+        return response
 
 
     def select_murder_scene(self):
@@ -86,3 +106,5 @@ class GameBoard:
         return player_and_cards
         # player_and_cards = player names + cards they have
         # left_over_cards has all left over cards
+
+    
