@@ -204,6 +204,26 @@ Request:
     "chosenCharacter": "Mr. Green"
 }
 
+# Board Render
+{
+    "responseFor": "renderBoard",
+    "gameBoard": {
+        "0,0": {
+            "name": "Study",
+            "players": [],
+            "weapons": []
+        },
+        
+        ...
+
+        "4,4": {
+            "name": "Kitchen",
+            "players": [],
+            "weapons": []
+        }
+    }
+}
+
 # Turn Phase
 Broadcast Response: {
     "responseFor": "currentTurn",

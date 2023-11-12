@@ -87,7 +87,8 @@ class Lobby:
                 dice_set.add(val)
             else:
                 return {
-                    "highest_rolled": "tie"
+                    "highest_rolled": "tie",
+                    "diceTracker": self.dice_tracker
                 }
 
         for key, val in self.dice_tracker.items():
@@ -107,7 +108,8 @@ class Lobby:
         return {
             "dicePhase": "finishedRoll",
             "highest_roller": highest_roller,
-            "highest_rolled": highest_rolled
+            "highest_rolled": highest_rolled,
+            "diceTracker": self.dice_tracker
         }
 
     # Should not be hit if empty...
