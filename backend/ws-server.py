@@ -13,6 +13,10 @@ from websockets.server import serve
 # if they join or create the lobby
 lobbies = {}
 
+global_username_list = set()
+gobal_lobby_name_list = set()
+
+
 # Holds all players who connected and are currently not in lobby
 waiting_room_connections = {}
 
@@ -22,6 +26,8 @@ async def handler(websocket):
         print("Message Recvd: " + message)
         json_object = json.loads(message)
         send_to_requester = True
+
+        # Lobby API calls
         if json_object['request'] == 'createUser':
             response = await create_user(websocket, json_object)
 
@@ -49,6 +55,8 @@ async def handler(websocket):
                 # return since we sent messages to all who are in lobby
                 send_to_requester = False
 
+
+        # Game initialization api calls
         elif json_object['request'] == 'startGame':
             response = await start_game(json_object)
             if response['success'] == 'true':
@@ -56,7 +64,14 @@ async def handler(websocket):
                 await broad_cast(websockets, str(json.dumps(response, indent = 4)))
                 # return since we sent messages to all who are in lobby
                 send_to_requester = False
-            
+
+                # Get player turn order from lobby for dice roll
+                lobbies[json_object['lobby_name']].GameBoard.do_next_dice_roll()
+        
+        # Game sequence api calls
+        # elif json_object['request'] == 'rolledDice':
+
+
         ## Debugging API Calls
         elif json_object['request'] == 'getUsers':
              response = get_users()
@@ -89,7 +104,7 @@ def get_waiting_room_sockets():
     return websockets
 
 async def create_user(websocket, json_object):
-
+    # TODO: change to global_username_list validation for unique usernames
     if json_object['username'] not in waiting_room_connections.keys():
 
         # Create Player Object
@@ -169,7 +184,9 @@ async def join_lobby(json_object):
             "lobby_name": lobby_name,
             "username": username,
             "lobbies": get_lobbies(),
-            "responseFor": "joinLobby"
+            "responseFor": "joinLobby",
+            # TODO: Test to make sure it converts to JSON correctly
+            "lobbyReadyStatus": lobbies[lobby_name].get_ready_tracker()
         }
 
         # TODO: BroadCast to everyone in lobby player has joined
@@ -199,15 +216,15 @@ async def toggle_lobby_ready(json_object):
 
     return response
 
-# Check if atleast 4 players are in and ALL players are ready
+# Check if atleast 2 players are in and ALL players are ready
 async def start_game(json_object):
     lobby_name = json_object['lobby_name']
     username = json_object['username']
     current_lobby = lobbies[lobby_name]
     response = None
 
-    # Check if the player list in the lobby is greater than 3
-    if len(current_lobby.players) > 3 and current_lobby.host.username == username:
+    # Check if the player list in the lobby is greater than 1
+    if len(current_lobby.players) > 1 and current_lobby.host.username == username:
         
         ready_tracker = current_lobby.get_ready_tracker()
 
