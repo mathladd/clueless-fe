@@ -38,6 +38,7 @@ async def handler(websocket):
                 await broad_cast(get_waiting_room_sockets(), str(json.dumps(response, indent = 4)))
                 # do not return since we have to send message to player
                 # who created lobby
+            send_to_requester = False
 
         elif json_object['request'] == 'joinLobby':
             response = await join_lobby(json_object)
@@ -82,8 +83,13 @@ async def handler(websocket):
 
         # Game sequence api calls
         elif json_object['request'] == 'rolledDice':
+            # Get dice results
             result = await handle_dice_roll(json_object)
+            
+            # Get websockets for broadcast
             websockets = lobbies[json_object['lobby_name']].get_websockets()
+            send_to_requester = False
+
             # if tie, broadcast tied result, then kick off dice roll phase again
             if result["highest_rolled"] == "tie":
                 lobbies[json_object['lobby_name']].build_dice_roll_order()
@@ -93,9 +99,11 @@ async def handler(websocket):
                 response =  {
                     "responseFor": "rolledDice",
                     "dicePhase": "startingDiceRoll",
-                    "currentTurn": next_roller
+                    "currentTurn": next_roller,
+                    "diceTracker": lobbies[json_object['lobby_name']].dice_tracker
                 }
             
+            # if still rolling dice, send next plauer turn for dice roll
             elif result["dicePhase"] == "rollingDice":
                 response = result
             
@@ -105,7 +113,8 @@ async def handler(websocket):
                     "responseFor": "rolledDice",
                     "dicePhase": "finishedDiceRoll",
                     "highest_roller": result["highest_roller"],
-                    "highest_rolled": result["highest_rolled"]
+                    "highest_rolled": result["highest_rolled"],
+                    "diceTracker": lobbies[json_object['lobby_name']].dice_tracker
                 }
 
             await broad_cast(websockets, str(json.dumps(response, indent = 4)))
@@ -121,6 +130,7 @@ async def handler(websocket):
 
         elif json_object['request'] == 'characterSelect':
             websockets = lobbies[json_object['lobby_name']].get_websockets()
+            send_to_requester = False
             result = await handle_character_selection(json_object)
             response = result
             await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
@@ -334,7 +344,8 @@ async def handle_dice_roll(json_object):
             "responseFor": "rolledDice",
             "dicePhase": "rollingDice",
             "currentTurn": next_roller,
-            "highest_rolled": "None"
+            "highest_rolled": "None",
+            "diceTracker": current_lobby.dice_tracker
         }
 
     # if not available, then dice rolls finished, calculate order
