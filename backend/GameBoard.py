@@ -6,11 +6,21 @@ import random
 class GameBoard:
     def __init__(self):
         # cards from game
-        self.weapon_cards = ['knife', 'gun']
-        self.room_cards = ['living room', 'kitchen', 'balcony']
-        self.characters = ['Anthony', 'Dakota', 'Duy', 'Shaheer']
+        self.weapon_cards = ['Candlestick', 'Dagger', 'Lead pipe', 
+                             'Revolver', 'Rope', 'Spanner']
+
+        self.room_cards = ['Kitchen', 'Ballroom', 'Conservatory', 
+                           'Dining Room', 'Library', 'Billard Room',
+                           'Lounge', 'Study', 'Hall']
+
+        self.characters = ['Miss Scarlett', 'Colonel Mustard', 
+                           'Mrs. White', 'Mr. Green', 
+                           'Mrs. Peacock', 'Professor Plum']
 
         self.winning_combo = [] 
+
+        # Fill this with player lobby order for dice roll
+        self.dice_roll_order = []
 
         # To be filled in after dice roll.
         self.turn_order = []
@@ -20,6 +30,9 @@ class GameBoard:
         
         # fill with room objects
         self.rooms = []
+        
+        # Assign to player object of who is currently suggesting
+        self.current_suggester = None
 
         # 2D Game room grid
         rows, cols = (5, 5)
@@ -29,13 +42,22 @@ class GameBoard:
 
     def setup_board(self):
         None
-        room_cords[(0,0), (0,9), (9,0), (9,9)]
+        room_cords = [
+            (0,0), (0,2), (0,4),
+            (2,0), (2,2), (2,4),
+            (4,0), (4,2), (4,4)
+        ]
 
         # for loop over board
         #     if coords is in room_cords
         #         assign rooms to specific coords
         #     else
         #         assign as a regular hallway tile
+
+                    # new_tile = Tile("Hallway")
+                    # if a player is miss scarlet:
+                    #     new_tile.player.append(player.username)
+
         # Response {
         #   "0,0": {
         #           "name": kitchen,
@@ -47,6 +69,7 @@ class GameBoard:
         #           "players": ["Hashem"]
         #        }
         # }    
+
 
 
     def select_murder_scene(self):
@@ -86,3 +109,5 @@ class GameBoard:
         return player_and_cards
         # player_and_cards = player names + cards they have
         # left_over_cards has all left over cards
+
+    
