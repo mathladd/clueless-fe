@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { SetStateAction } from 'jotai';
 import GameSession from 'components/GameSession';
 import { WS } from 'types/common';
 import LobbyScreen from 'components/LobbyScreen';
@@ -26,6 +25,8 @@ function HomePage({ ws }: { ws: WS }) {
           setLobbies={setLobbies}
           user={user}
           setUser={setUser}
+          currentGameLobby={currentGameLobby}
+          setCurrentGameLobby={setCurrentGameLobby}
         />
       )}
       <div />

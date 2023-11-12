@@ -22,8 +22,8 @@ export default function LobbyScreen({
   setLobbies: Dispatch<SetStateAction<Lobby | undefined>>;
   user: string;
   setUser: Dispatch<SetStateAction<string>>;
-  currentGameLobby: Lobby;
-  setCurrentGameLobby: Dispatch<SetStateAction<Lobby>>;
+  currentGameLobby: Lobby | undefined;
+  setCurrentGameLobby: Dispatch<SetStateAction<Lobby | undefined>>;
 }) {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
@@ -126,6 +126,7 @@ export default function LobbyScreen({
             message: `The game is now started`,
             type: 'INFO',
           });
+          setCurrentGameLobby(lobbies);
         } else {
           setIsGameStarted(false);
           setUserMess({
@@ -133,9 +134,6 @@ export default function LobbyScreen({
             type: 'ERROR',
           });
         }
-      } else if (data?.responseFor === 'cardShuffled') {
-        // This ws last message is about the game has been initialized cards being shuffled
-        console.log(data);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
