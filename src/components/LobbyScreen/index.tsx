@@ -13,6 +13,8 @@ export default function LobbyScreen({
   setLobbies,
   user,
   setUser,
+  currentGameLobby,
+  setCurrentGameLobby,
 }: {
   ws: WS;
   setIsGameStarted: Dispatch<SetStateAction<boolean>>;
@@ -20,6 +22,8 @@ export default function LobbyScreen({
   setLobbies: Dispatch<SetStateAction<Lobby | undefined>>;
   user: string;
   setUser: Dispatch<SetStateAction<string>>;
+  currentGameLobby: Lobby;
+  setCurrentGameLobby: Dispatch<SetStateAction<Lobby>>;
 }) {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
@@ -80,7 +84,10 @@ export default function LobbyScreen({
       } else if (data?.responseFor === 'joinLobby') {
         // This ws last message is about a new player has joined the room
         if (data?.success === 'true') {
-          onToggleReady({ username: user, lobbyName: data.lobby_name ?? '' });
+          const tracker = JSON.parse(data.ready_tracker ?? '') as UserReady;
+          const status = tracker[user] as unknown as boolean;
+          setIsReady(status);
+          setAllUserStatus(tracker);
           setRoom(data.lobby_name);
           setUserMess({
             message: `${data.username ?? ''} has now joined room ${data.lobby_name ?? ''}`,
