@@ -141,3 +141,71 @@
         },
         "responseFor": "startGame"
     }
+
+# Dice Roll
+Broadcast response: {
+    "responseFor": "rolledDice",
+    "dicePhase": "startingDiceRoll",
+    "currentTurn": "Dakota"
+}
+
+Request: {
+    "request": "rolledDice",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "dice_roll": "1"
+}
+
+Broadcast response: {
+    "responseFor": "rolledDice",
+    "dicePhase": "rollingDice",
+    "currentTurn": "Shaheer",
+    "highest_rolled": "None"
+}
+
+# Character Selection
+Broadcast Response: {
+    "responseFor": "characterSelect",
+    "currentTurn": "Shaheer",
+    "characters": [
+        "Miss Scarlett",
+        "Colonel Mustard",
+        "Mrs. White",
+        "Mr. Green",
+        "Mrs. Peacock",
+        "Professor Plum"
+    ]
+}
+Request: {
+    "request": "characterSelect",
+    "username": "Shaheer",
+    "lobby_name": "lobby1",
+    "chosenCharacter": "Professor Plum"
+}
+
+Broadcast Response: {
+    "responseFor": "characterSelect",
+    "currentTurn": "Dakota",
+    "characters": [
+        "Miss Scarlett",
+        "Colonel Mustard",
+        "Mrs. White",
+        "Mr. Green",
+        "Mrs. Peacock"
+    ],
+    "characterSelectionPhase": "selecting"
+}
+
+Request: 
+{
+    "request": "characterSelect",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "chosenCharacter": "Mr. Green"
+}
+
+# Turn Phase
+Broadcast Response: {
+    "responseFor": "currentTurn",
+    "currentTurn": "Shaheer"
+}
