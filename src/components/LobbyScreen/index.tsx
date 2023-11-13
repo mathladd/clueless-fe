@@ -72,7 +72,7 @@ export default function LobbyScreen({
       } else if (data?.responseFor === 'joinLobby') {
         // This ws last message is about a new player has joined the room
         if (data?.success === 'true') {
-          const tracker = JSON.parse(data.ready_tracker ?? '') as UserReady;
+          const tracker = data.lobbyReadyStatus as UserReady;
           const status = tracker[user] as unknown as boolean;
           setIsReady(status);
           setAllUserStatus(tracker);

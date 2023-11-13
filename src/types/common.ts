@@ -1,5 +1,6 @@
 import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
 import { ReadyState } from 'react-use-websocket';
+import { UserReady } from './lobby';
 
 export interface RegionalCurrencies {
   USD: string;
@@ -51,5 +52,6 @@ export type WSResponse = {
   lobby_name?: string;
   username?: string;
   ready_tracker?: string;
+  lobbyReadyStatus?: UserReady;
   gameboard_data?: string;
 };

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import GameSession from 'components/GameSession';
 import { WS } from 'types/common';
 import LobbyScreen from 'components/LobbyScreen';
-import { Lobby } from 'types/lobby';
 import 'bootstrap/dist/css/bootstrap.css';
 
 function HomePage({ ws }: { ws: WS }) {
@@ -16,8 +15,8 @@ function HomePage({ ws }: { ws: WS }) {
   if (!isMounted) return null;
   return (
     <>
-      {isGameStarted || true ? (
-        <GameSession ws={ws} user={user} lobby={currentGameLobbyName} gameboardObj={gameboardObj} />
+      {isGameStarted ? (
+        <GameSession ws={ws} user={user} lobby={currentGameLobbyName} gameboard={gameboardObj} />
       ) : (
         <LobbyScreen
           ws={ws}

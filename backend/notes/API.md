@@ -205,6 +205,12 @@ Request:
 }
 
 # Board Render
+Request: 
+{
+    "request": "renderBoard",
+    "lobby_name": "lobby1",
+}
+Broadcast Response: 
 {
     "responseFor": "renderBoard",
     "gameBoard": {
@@ -225,6 +231,11 @@ Request:
 }
 
 # Turn Phase
+Request: 
+{
+    "request": "currentTurn",
+    "lobby_name": "lobby1",
+}
 Broadcast Response: {
     "responseFor": "currentTurn",
     "currentTurn": "Shaheer"
