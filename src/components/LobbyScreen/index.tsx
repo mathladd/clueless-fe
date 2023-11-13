@@ -2,30 +2,29 @@ import { ReadyState } from 'react-use-websocket';
 import { Dispatch, useEffect, useState } from 'react';
 import { SetStateAction } from 'jotai';
 import LoginInputs from 'components/LoginInputs';
-import { WS } from 'types/common';
+import { WS, WSResponse } from 'types/common';
 import { Lobby, UserReady } from 'types/lobby';
 import useLobbyScreen from 'hooks/useLobbyScreen';
 
 export default function LobbyScreen({
   ws,
   setIsGameStarted,
-  lobbies,
-  setLobbies,
   user,
   setUser,
   setCurrentGameLobbyName,
+  setGameboardObj,
 }: {
   ws: WS;
   setIsGameStarted: Dispatch<SetStateAction<boolean>>;
-  lobbies?: Lobby;
-  setLobbies: Dispatch<SetStateAction<Lobby | undefined>>;
   user: string;
   setUser: Dispatch<SetStateAction<string>>;
   setCurrentGameLobbyName: Dispatch<SetStateAction<string | undefined>>;
+  setGameboardObj: Dispatch<SetStateAction<any>>;
 }) {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [lobbyNameInput, setLobbyNameInput] = useState('');
+  const [lobbies, setLobbies] = useState<Lobby>();
   const [room, setRoom] = useState<string>();
   const [isReady, setIsReady] = useState(false);
   const [allUsersStatus, setAllUserStatus] = useState<UserReady>();
@@ -38,16 +37,7 @@ export default function LobbyScreen({
 
   useEffect(() => {
     if (ws?.lastMessage?.data) {
-      const data = JSON.parse(String(ws?.lastMessage?.data)) as {
-        responseFor?: string;
-        success?: string;
-        message?: string;
-
-        created_lobby?: string;
-        lobby_name?: string;
-        username?: string;
-        ready_tracker?: string;
-      };
+      const data = JSON.parse(String(ws?.lastMessage?.data)) as WSResponse;
       if (!data?.responseFor) {
         // This ws last message is about getting the list of Lobbies
         setLobbies(data as Lobby);
@@ -125,6 +115,7 @@ export default function LobbyScreen({
             type: 'INFO',
           });
           setCurrentGameLobbyName(room);
+          setGameboardObj(data.gameboard_data);
         } else {
           setIsGameStarted(false);
           setUserMess({

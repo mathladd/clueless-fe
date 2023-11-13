@@ -8,25 +8,24 @@ import 'bootstrap/dist/css/bootstrap.css';
 function HomePage({ ws }: { ws: WS }) {
   const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [lobbies, setLobbies] = useState<Lobby>();
   const [currentGameLobbyName, setCurrentGameLobbyName] = useState<string>();
   const [user, setUser] = useState<string>('');
+  const [gameboardObj, setGameboardObj] = useState<any>();
 
   useEffect(() => setIsMounted(true), []);
   if (!isMounted) return null;
   return (
     <>
       {isGameStarted || true ? (
-        <GameSession ws={ws} user={user} lobby={currentGameLobbyName} />
+        <GameSession ws={ws} user={user} lobby={currentGameLobbyName} gameboardObj={gameboardObj} />
       ) : (
         <LobbyScreen
           ws={ws}
           setIsGameStarted={setIsGameStarted}
-          lobbies={lobbies}
-          setLobbies={setLobbies}
           user={user}
           setUser={setUser}
           setCurrentGameLobbyName={setCurrentGameLobbyName}
+          setGameboardObj={setGameboardObj}
         />
       )}
       <div />

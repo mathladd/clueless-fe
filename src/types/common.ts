@@ -41,3 +41,15 @@ export type WS = {
   };
   readyState: ReadyState;
 };
+
+export type WSResponse = {
+  responseFor?: string;
+  success?: string;
+  message?: string;
+
+  created_lobby?: string;
+  lobby_name?: string;
+  username?: string;
+  ready_tracker?: string;
+  gameboard_data?: string;
+};
