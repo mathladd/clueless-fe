@@ -229,10 +229,16 @@ function GameSession({
         Testing
       </button>
     </div>
+    // <img src={cardImgMapping[cardName]}/>
   );
 }
 
 export default GameSession;
+
+const cardImgMapping = {
+  'Miss Scarlett': 'img.com/miss scarlet',
+  Revolver: 'img.com/miss scarlet',
+};
 
 /// Ignore the sample code below was thinking it would be good to restructure the layout!
 
