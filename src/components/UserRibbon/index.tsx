@@ -10,7 +10,7 @@ import Overlay from 'react-bootstrap/Overlay';
 
 
 
-function UserRibbon({ users }: { users: any[]; }) {
+function UserRibbon({ users , currentPlayer}: { users: any[]; currentPlayer: string; }) {
   const target = useRef(null);
 
   return (
@@ -26,14 +26,14 @@ function UserRibbon({ users }: { users: any[]; }) {
                    text={'Dark'.toLowerCase() === 'light' ? 'dark' : 'white'}
                    style={{ width: '7rem' }}
                    className="mb-2">
-                  <Card.Title>{user.username}</Card.Title>
+                  <Card.Title>{user}</Card.Title>
                     <Card.Body  style={{ position: 'relative'}}>
                         <Card.Img
                           ref={target} 
                           variant="top"
                           src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmV_GMmai8gMADcJbWJgdA7VNIEN1Bx1strQ&usqp=CAU"
                           />
-                        {user.turn === true ? <Spinner animation="grow" style={{ position: 'absolute', top: "45px", right: "40px"}}/> : ""}
+                        {user === currentPlayer ? <Spinner animation="grow" style={{ position: 'absolute', top: "45px", right: "40px"}}/> : ""}
                         
                   </Card.Body>
                 </Card>

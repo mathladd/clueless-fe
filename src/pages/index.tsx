@@ -15,8 +15,8 @@ function HomePage({ ws }: { ws: WS }) {
   if (!isMounted) return null;
   return (
     <>
-      {isGameStarted ? (
-        <GameSession ws={ws} user={user} lobby={currentGameLobbyName} gameboard={gameboardObj} />
+      {true ? (
+        <GameSession ws={ws} username={user} lobby={currentGameLobbyName} gameboard={gameboardObj} />
       ) : (
         <LobbyScreen
           ws={ws}

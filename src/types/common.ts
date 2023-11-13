@@ -50,8 +50,10 @@ export type WSResponse = {
 
   created_lobby?: string;
   lobby_name?: string;
+  lobbies? : string; 
   username?: string;
   ready_tracker?: string;
   lobbyReadyStatus?: UserReady;
   gameboard_data?: string;
+  currentTurn?: string;
 };

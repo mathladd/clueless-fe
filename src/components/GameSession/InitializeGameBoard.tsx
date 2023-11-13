@@ -101,7 +101,6 @@ function InitializeGameBoard ({ ws }: { ws: WS; }) {
       username: "Math_Lad",
       lobby_name: "Dev_Test_lobby"
     });
-  
   };
 
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import CluelessMap from '../../../public/assets/images/Clueless Game Board.png'
+import CluelessMap from '../../../public/assets/images/Clueless Game Board Small Version.png'
 import React from 'react';
 
 const GameBoard = () => {
@@ -10,8 +10,8 @@ const GameBoard = () => {
         if(!canvas){
             return;
         }
-        canvas.width = 860;
-        canvas.height = 1000;
+        canvas.width = 660;
+        canvas.height = 510;
         
         const context = canvas.getContext('2d');
         if(!context){
@@ -27,7 +27,7 @@ const GameBoard = () => {
         }
     }, []);
 
-    return <canvas ref={canvasRef} />;
+    return <canvas style={{ marginRight:'auto', marginLeft: 'auto', display: 'block'}} ref={canvasRef} />;
     
 }
 
