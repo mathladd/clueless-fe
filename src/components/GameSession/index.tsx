@@ -16,62 +16,10 @@ import Button from "react-bootstrap/Button";
 import UserRibbon from "components/UserRibbon";
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
+import IntiliseGame from './InitliseGameBoard';
+import InitializeGameBoard from "./InitliseGameBoard";
 
 
-type Player = {
-  id: number;
-  username: string;
-  location: string;
-  cards: string[];
-  turn: boolean;
-  status: string;
-  role: number;
-};
-let p1: Player = {
-  id: 0,
-  username: "Math_Lad",
-  location: "Hall",
-  cards: ["Knife", "Hall", "Ms.Peacock", "Pining Room", "Lounge", "Wrench"],
-  turn: false,
-  status: "unblocked",
-  role: 0,
-};
-let p2 : Player = {
-  id: 1,
-  username: "Shaheer",
-  location: "Hall",
-  cards: ["Knife", "Hall", "Ms.Peacock", "Pining Room", "Lounge", "Wrench"],
-  turn: false,
-  status: "unblocked",
-  role: 0,
-};
-let p3 : Player = {
-  id: 2,
-  username: "D-K",
-  location: "Hall",
-  cards: ["Knife", "Hall", "Ms.Peacock", "Pining Room", "Lounge", "Wrench"],
-  turn: false,
-  status: "unblocked",
-  role: 0,
-};
-let p4 : Player = {
-  id: 3,
-  username: "Puggp_03",
-  location: "Hall",
-  cards: ["Knife", "Hall", "Ms.Peacock", "Pining Room", "Lounge", "Wrench"],
-  turn: false,
-  status: "unblocked",
-  role: 0,
-};
-let p5 : Player = {
-  id: 4,
-  username: "Hasheem",
-  location: "Hall",
-  cards: ["Knife", "Hall", "Ms.Peacock", "Pining Room", "Lounge", "Wrench"],
-  turn: false,
-  status: "unblocked",
-  role: 0,
-};
 let sessionUsers: any = [];
 let currentPlayerTurn: number;
 let gameBoard: any;
@@ -155,7 +103,7 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
     }
   
   //Removed web socket watcher
-  });
+  }, [ws?.lastMessage]);
 
 
 
@@ -171,13 +119,107 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
   const testUser = () => {
     ws?.sendJsonMessage({
       request: "createUser",
-      username: "Duy",
+      username: "Math_Lad",
       password: "asfasdfa",
     });
   };
 
-  const onButton2Click = () => {
+  const startGameTest = () => {
+
+    ws?.sendJsonMessage({
+      request: "createUser",
+      username: "Math_Lad",
+      password: "ml_pwd",
+    });
+
+    ws?.sendJsonMessage({
+      request: "createLobby",
+      lobby_name: "Dev_Test_lobby",
+      username: "Math_Lad" ,
+    });
+
+    ws?.sendJsonMessage({
+      request: "createUser",
+      username: "D-K",
+      password: "dk_pwd",
+    });
+
+    ws?.sendJsonMessage({
+      request: "joinLobby",
+      lobby_name: "Dev_Test_lobby",
+      username: "D-K" ,
+    });
+
+    ws?.sendJsonMessage({
+      request: "createUser",
+      username: "Shaheer",
+      password: "sh_pwd",
+    });
+    ws?.sendJsonMessage({
+      request: "joinLobby",
+      lobby_name: "Dev_Test_lobby",
+      username: "Shaheer" ,
+    });
+    ws?.sendJsonMessage({
+      request: "createUser",
+      username: "Anthony",
+      password: "a_pwd",
+    });
+    ws?.sendJsonMessage({
+      request: "joinLobby",
+      lobby_name: "Dev_Test_lobby",
+      username: "Anthony" ,
+    });
+    ws?.sendJsonMessage({
+      request: "createUser",
+      username: "Hasheem",
+      password: "hs_pwd",
+    });
+    ws?.sendJsonMessage({
+      request: "joinLobby",
+      lobby_name: "Dev_Test_lobby",
+      username: "Hasheem" ,
+    });
+
     ws.sendJsonMessage({ request: "getUsers" });
+    ws.sendJsonMessage({ request: "getLobbies" });
+    
+    ws?.sendJsonMessage({
+      request: "toggleReady",
+      username: "Math_Lad",
+      lobby_name: "Dev_Test_lobby"
+    });
+
+    ws?.sendJsonMessage({
+      request: "toggleReady",
+      username: "D-K",
+      lobby_name: "Dev_Test_lobby"
+    });
+
+    ws?.sendJsonMessage({
+      request: "toggleReady",
+      username: "Shaheer",
+      lobby_name: "Dev_Test_lobby"
+    });
+
+    ws?.sendJsonMessage({
+      request: "toggleReady",
+      username: "Anthony",
+      lobby_name: "Dev_Test_lobby"
+    });
+
+    ws?.sendJsonMessage({
+      request: "toggleReady",
+      username: "Hasheem",
+      lobby_name: "Dev_Test_lobby"
+    });
+
+    ws?.sendJsonMessage({
+      request: "startGame",
+      username: "Math_Lad",
+      lobby_name: "Dev_Test_lobby"
+    });
+  
   };
 
   const changePlayer = () => {
@@ -193,9 +235,7 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
   return (
     <div>
       <div>
-        <Button variant="secondary" type="button" onClick={() => startGame(true)}>
-          Start Game
-        </Button>
+        <InitializeGameBoard ws={ws}/>
         <Button variant="secondary" type="button" onClick={() => changePlayer()}>
           Shift Next Player
         </Button>
@@ -238,7 +278,7 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
       <button
         type="button"
         className="p-3 bg-orange-500 text-white rounded-lg"
-        onClick={onButton2Click}
+        onClick={startGameTest}
       >
         Testing
       </button>
