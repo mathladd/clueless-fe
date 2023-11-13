@@ -8,6 +8,11 @@ export default function useLobbyScreen({ ws }: { ws: WS }) {
       password,
     });
   };
+
+  const onGetLobbies = () => {
+    ws.sendJsonMessage({ request: 'getLobbies' });
+  };
+
   const onCreateLobby = ({
     lobbyName,
     username,
@@ -16,11 +21,8 @@ export default function useLobbyScreen({ ws }: { ws: WS }) {
     username: string | undefined;
   }) => {
     ws.sendJsonMessage({ request: 'createLobby', username, lobby_name: lobbyName });
+    onGetLobbies();
   };
-  const onGetLobbies = () => {
-    ws.sendJsonMessage({ request: 'getLobbies' });
-  };
-
   const onStartGame = ({
     lobbyName,
     username,

@@ -1,25 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import Button from 'react-bootstrap/Button';
 import { WS, WSResponse } from 'types/common';
-import Navbar from 'components/Navbar';
-import UserRibbon from 'components/UserRibbon';
+import { Character, GameBoardSetup } from 'types/game';
 import GameBoard from '../GameBoard/GameBoard';
-import GameCards from '../GameCards/index';
-import ClueSheet from '../ClueSheet/ClueSheet';
-import DiceModal from '../DiceModal/index';
-import CharacterModal from '../CharacterSelect/index';
-import Styles from './GameSession.module.css';
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import InitializeGameBoard from './InitializeGameBoard';
-import 'bootstrap/dist/css/bootstrap.css';
-import { Center } from '@chakra-ui/react';
-import { ro } from 'date-fns/locale';
-import RollDice from 'components/DiceModal/RollDice';
 import CharacterSelectModal from '../CharacterSelect/index';
+import DiceModal from '../DiceModal/index';
+import 'bootstrap/dist/css/bootstrap.css';
+import Card from './Card';
+import Player from './Player';
 
-let completeList: string[] = [];
+type GameStatuses = 'rolledDice' | 'characterSelect';
+
+const statusDisplayMapping: { [key: GameStatuses | string]: string } = {
+  rolledDice: 'Dice roll ongoing...',
+  characterSelect: 'Character selection ongoing...',
+};
 
 function GameSession({
   ws,
@@ -28,203 +22,189 @@ function GameSession({
   gameBoard,
 }: {
   ws: WS;
-  username: string;
-  lobby: string;
-  gameBoard: any;
+  username: string | undefined;
+  lobby: string | undefined;
+  gameBoard: GameBoardSetup | undefined;
 }) {
-  console.log(gameBoard);
+  // console.log('left_over_cards', gameBoard?.left_over_cards);
+  // console.log('player_cards', gameBoard?.player_cards);
+  // console.log('winning_combo', gameBoard);
 
-
-  const sessionUsers = ["Math_Lad", "D-K", "Shaheer",  "Anthony", "Hasheem"];
-  const [currentPlayerTurn, setCurrentPlayerTurn] = useState<any>("None");
-  const [gameStarted, startGame] = useState(false);
-  const [user, setUser] = useState(username);
-  const [playerTurnComplete, setTurnComplete] = useState(false);
-  const [turnList, setTurnList] = useState([]);
-  const [gameState, setGameState] = useState('initialize_game');
+  const [currentPlayerTurn, setCurrentPlayerTurn] = useState<string | undefined>();
+  const [playerCharacterMapping, setPlayerCharacterMapping] =
+    useState<{ username: string | undefined; character: Character | string }[]>();
+  const [playerDiceMapping, setPlayerDiceMapping] = useState<{ [key: string]: number }>();
   const [diceRole, setDiceRole] = useState(0);
-  const [playerId, setPlayerId] = useState(0);
-  const [character, setCharacter] = useState<any>("None");
+  const [isRerolling, setIsRerolling] = useState(false);
 
-  const changeUser = () =>{
-    setUser(sessionUsers.indexOf(user) != sessionUsers.length - 1? sessionUsers[sessionUsers.indexOf(user) + 1]: sessionUsers[0]);
-    console.log("Changed User", user);
-  }
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | undefined>();
+  const [availableCharacters, setAvailableCharacters] = useState<Character[] | undefined>();
 
+  const [gameState, setGameState] = useState<GameStatuses>('rolledDice');
+
+  const onSetChar = (c: Character) => [setSelectedCharacter(c)];
 
   useEffect(() => {
     if (ws?.lastMessage?.data) {
       const data = JSON.parse(String(ws?.lastMessage?.data)) as WSResponse;
-      console.log("input",data);
-      console.log(username)
-
-      if (!data?.responseFor && !gameStarted) {
-        // console.log('Error');
-        // Get Game Status
-      }else if (data?.responseFor === 'rolledDice'){
-        if(diceRole === 0 ){
-          console.log(currentPlayerTurn, username, playerTurnComplete, diceRole);
-          setCurrentPlayerTurn(data?.currentTurn);
-          console.log(diceRole,currentPlayerTurn)
-          setGameState("Dice Role");
-        }else if (diceRole > 0  && user === currentPlayerTurn){
-          console.log("true");
-          ws?.sendJsonMessage({
-              request: "rolledDice",
-              username: user, //change to user
-              lobby_name: "Dev_Test_lobby", //change to actual lobby
-              dice_roll: diceRole
-          });
-          completeList.push(user);
-          setTurnComplete(true);
-          setDiceRole(0);
+      console.log(ws?.lastMessage?.data);
+      if (data?.responseFor === 'rolledDice') {
+        if (data?.highest_rolled === 'tie') {
+          setIsRerolling(true);
         }
-
-      }else if (data?.responseFor === 'characterSelect'){
-       console.log("Yeah")
-       setGameState("Character Select");
-       setCurrentPlayerTurn(data?.currentTurn);
+        setGameState('rolledDice');
+        setCurrentPlayerTurn(data?.currentTurn);
+        setPlayerDiceMapping(data?.diceTracker);
+      } else if (data?.responseFor === 'characterSelect') {
+        setGameState('characterSelect');
+        setAvailableCharacters(data?.characters);
+        setCurrentPlayerTurn(data?.currentTurn);
       }
     }
-  }, [diceRole, gameStarted, gameState, ws?.lastMessage?.data]);
+  }, [ws?.lastMessage?.data]);
 
+  useEffect(() => {
+    if (currentPlayerTurn === username && gameState === 'rolledDice' && diceRole > 0) {
+      ws?.sendJsonMessage({
+        request: 'rolledDice',
+        username,
+        lobby_name: lobby,
+        dice_roll: diceRole,
+      });
+      setDiceRole(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPlayerTurn, diceRole, lobby, username]);
+
+  useEffect(() => {
+    if (currentPlayerTurn === username && gameState === 'characterSelect' && !!selectedCharacter) {
+      ws?.sendJsonMessage({
+        request: 'characterSelect',
+        username,
+        lobby_name: lobby,
+        chosenCharacter: selectedCharacter,
+      });
+      setSelectedCharacter(undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPlayerTurn, selectedCharacter, lobby, username]);
+
+  useEffect(() => {
+    setPlayerCharacterMapping(
+      Object.keys(gameBoard?.player_cards ?? {}).map((p) => ({ username: p, character: '' })),
+    );
+  }, [gameBoard?.player_cards]);
+
+  if (!username || !lobby || !gameBoard) return null;
   return (
-    <Container>
-      <Row>
-        <Col>
-          <InitializeGameBoard ws={ws} />
-          <Button onClick={() => changeUser()} >Change User</Button>
-           {user}
-        </Col>
-      </Row>
-      <Row>
-        <Col>
-          <Navbar />
-        </Col>
-      </Row>
-      <Row>
-        <Col>
-          <UserRibbon users={sessionUsers} currentPlayer={currentPlayerTurn}/>
-        </Col>
-      </Row>
-      <Row className="justify-content-md-center">
-        <Col>
-          <GameBoard />
-          {currentPlayerTurn === user && gameState == "Dice Role" ? (
-            <DiceModal
-              inputValue={diceRole}
-              onInputValueChange={setDiceRole}
-            />): ""}
-          {gameState === "Character Select" ? (
-            <CharacterSelectModal 
-              inputValue={character}
-              onInputValueChange={setCharacter}/>): ""}
-        </Col>
-      </Row>
-      <Row className="justify-content-md-center">
-        <Col>
-          <GameCards cardDeck={['','', '', '']} />
-        </Col>
-      </Row>
-    </Container>
+    <div>
+      {gameState === 'rolledDice' && currentPlayerTurn === username && diceRole === 0 && (
+        <DiceModal inputValue={diceRole} onInputValueChange={setDiceRole} />
+      )}
+      {gameState === 'characterSelect' && currentPlayerTurn === username && !selectedCharacter && (
+        <CharacterSelectModal availableChars={availableCharacters} setChars={onSetChar} />
+      )}
+      <div className="flex justify-between py-4 px-4 bg-slate-900">
+        <div className="text-white font-bold text-2xl">CLUELESS: The game!</div>
+        <div className="flex text-white text-lg space-x-8">
+          <div className="flex space-x-2">
+            <div>You are:</div>
+            <div className="text-red-200">{username}</div>
+          </div>
+          <div className="flex space-x-2">
+            <div>In room:</div>
+            <div className="text-red-200">{lobby}</div>
+          </div>
+          <div className="flex space-x-2">
+            <div className="text-red-200">
+              {isRerolling ? 'Re-rolling ongoing...' : statusDisplayMapping[gameState]}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col space-y-8 p-8">
+        <div className="flex flex-col space-y-4">
+          <div className="w-fit bg-emerald-900 p-4 text-slate-200 space-y-4 rounded-lg">
+            <div>
+              <div className="text-xl font-semibold ">All players:</div>
+              <div className="flex space-x-2">
+                {playerCharacterMapping?.map((p) => (
+                  <Player
+                    username={p.username ?? ''}
+                    diceRolled={
+                      gameState === 'rolledDice' && !!playerDiceMapping
+                        ? playerDiceMapping[p.username as string]
+                        : undefined
+                    }
+                    character={p.character}
+                    isCurrent={p.username === currentPlayerTurn}
+                  />
+                ))}
+              </div>
+            </div>
+            {diceRole > 0 && <div className="text-xl font-semibold ">You rolled: {diceRole}</div>}
+            <div className="text-xl font-semibold ">Current player turn: {currentPlayerTurn}</div>
+          </div>
+          <div className="flex space-x-4">
+            <div className="flex flex-col space-y-3 bg-slate-800 w-fit p-4 rounded-lg">
+              <div className="text-xl font-bold text-slate-200">Your cards:</div>
+              <div className="flex space-x-2">
+                {gameBoard?.player_cards[username].map((cardName) => (
+                  <Card cardName={cardName} />
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col space-y-3 bg-slate-800 w-fit p-4 rounded-lg">
+              <div className="text-xl font-bold text-slate-200">Leftover Cards:</div>
+              <div className="flex space-x-2">
+                {gameBoard?.left_over_cards.map((cardName) => (
+                  <Card cardName={cardName} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <GameBoard />
+      </div>
+    </div>
   );
+  // return (
+  // <Container>
+  //   <Row>
+  //     <Col>{user}</Col>
+  //   </Row>
+  //   <Row>
+  //     <Col>
+  //       <Navbar />
+  //     </Col>
+  //   </Row>
+  //   <Row>
+  //     <Col>
+  //       <UserRibbon users={sessionUsers} currentPlayer={currentPlayerTurn} />
+  //     </Col>
+  //   </Row>
+  //   <Row className="justify-content-md-center">
+  //     <Col>
+  //       <GameBoard />
+  //       {currentPlayerTurn === user && gameState === 'Dice Role' ? (
+  //         <DiceModal inputValue={diceRole} onInputValueChange={setDiceRole} />
+  //       ) : (
+  //         ''
+  //       )}
+  //       {gameState === 'Character Select' ? (
+  //         <CharacterSelectModal inputValue={character} onInputValueChange={setCharacter} />
+  //       ) : (
+  //         ''
+  //       )}
+  //     </Col>
+  //   </Row>
+  //   <Row className="justify-content-md-center">
+  //     <Col>
+  //       <GameCards cardDeck={['', '', '', '']} />
+  //     </Col>
+  //   </Row>
+  // </Container>
+  // );
 }
 
 export default GameSession;
-
-const cardImgMapping = {
-  'Miss Scarlett': 'img.com/miss scarlet',
-  Revolver: 'img.com/miss scarlet',
-};
-
-/// Ignore the sample code below was thinking it would be good to restructure the layout!
-
-// <Container>
-
-//       <Row>
-//         <Col>
-//           <Navbar />
-//         </Col>
-//       </Row>
-//       <Row>
-//         <Col>
-//           <UserRibbon users ={sessionUsers}/>
-//         </Col>
-//       </Row>
-
-//       <Row>
-//         <Col xs={6} md={4}>
-//           <div>
-//             <GameCards cardDeck={getPlayerCardDeck(playerId)} />
-//           </div>
-//           <div>
-//             <ClueSheet />
-//           </div>
-//         </Col>
-//         <Col xs={6} md={4}>
-//           <GameBoard />
-//           {playerId === playerTurn?.id && gameState == "diceRole" ? (
-//               <DiceModal
-//                 inputValue={DiceRole}
-//                 onInputValueChange={setDiceRole}
-//               />
-//             ) : (
-//               ""
-//             )}
-//         </Col>
-//         <Col xs={6} md={4}>
-//           <div>
-//             <Button />
-//           </div>
-//           <div>
-//             <Button />
-//           </div>
-//         </Col>
-//       </Row>
-
-//       {/* Columns are always 50% wide, on mobile and desktop */}
-//       <Row>
-//         <Col xs={6}>xs=6</Col>
-//         <Col xs={6}>xs=6</Col>
-//       </Row>
-//     </Container>
-
-{/* <div>
-<div>
-  <InitializeGameBoard ws={ws}/>
-  <Button variant="secondary" type="button" onClick={() => startGame(true)}>
-    Start Game
-  </Button>
-  <Button variant="secondary" type="button" onClick={() =>  }>
-    Shift Next Player
-  </Button>
-  <input value={playerId} readOnly />
-</div>
-<div>
-  <Navbar />
-</div>
-<div>
-  <UserRibbon users={sessionUsers} />
-  <div>{String(`Leftover cards: ${gameboard.left_over_cards}`)}</div>
-  <div>{String(`Your cards: ${gameboard.player_cards[user]}`)}</div>
-  <div>{String(`***Secret winning combo***: ${gameboard.winning_combo}`)}</div>
-</div>
-<div style={{ alignItems: 'center' }}>
-  <div className={Styles.flexgroup}>
-    <div style={{ width: '25%' }}>
-      <ClueSheet />
-    </div>
-    <div style={{ width: '75%' }}>
-      <GameBoard />
-      {playerId === playerTurn?.id && gameState == 'diceRole' ? (
-        <DiceModal inputValue={DiceRole} onInputValueChange={setDiceRole} />
-      ) : (
-        ''
-      )}
-    </div>
-    <div style={{ width: '25%' }}>
-      <GameCards cardDeck={} />
-    </div>
-  </div>
-</div>
-</div> */}

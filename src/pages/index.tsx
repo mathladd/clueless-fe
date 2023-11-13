@@ -3,20 +3,21 @@ import GameSession from 'components/GameSession';
 import { WS } from 'types/common';
 import LobbyScreen from 'components/LobbyScreen';
 import 'bootstrap/dist/css/bootstrap.css';
+import { GameBoardSetup } from 'types/game';
 
 function HomePage({ ws }: { ws: WS }) {
   const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState(false);
   const [currentGameLobbyName, setCurrentGameLobbyName] = useState<string>();
-  const [user, setUser] = useState<string>('');
-  const [gameboardObj, setGameboardObj] = useState<any>();
+  const [user, setUser] = useState<string>();
+  const [gameboard, setGameboard] = useState<GameBoardSetup>();
 
   useEffect(() => setIsMounted(true), []);
   if (!isMounted) return null;
   return (
     <>
-      {true ? (
-        <GameSession ws={ws} username={user} lobby={currentGameLobbyName} gameboard={gameboardObj} />
+      {isGameStarted ? (
+        <GameSession ws={ws} username={user} lobby={currentGameLobbyName} gameBoard={gameboard} />
       ) : (
         <LobbyScreen
           ws={ws}
@@ -24,7 +25,7 @@ function HomePage({ ws }: { ws: WS }) {
           user={user}
           setUser={setUser}
           setCurrentGameLobbyName={setCurrentGameLobbyName}
-          setGameboardObj={setGameboardObj}
+          setGameboard={setGameboard}
         />
       )}
       <div />
