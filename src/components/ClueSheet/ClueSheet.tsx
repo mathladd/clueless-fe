@@ -18,7 +18,7 @@ function MyVerticallyCenteredModal(props) {
         <Modal.Title id="contained-modal-title-vcenter">
           Clue Sheet
         </Modal.Title>
-      </Modal.Header>
+      </Modal.Header>``
       <Modal.Body>
         <Table striped bordered hover size="sm">
             <thead>

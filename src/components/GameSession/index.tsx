@@ -119,10 +119,13 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
         username?: string;
         ready_tracker?: string;
       };
-      console.log(data?.responseFor, data);
+      console.log("test",data?.responseFor, data);
       if (!data?.responseFor && gameStarted != true) {
         console.log("Error");
         //Get Game Status
+      }else{
+
+
       }
     }
     if (gameStarted == true) {
@@ -158,6 +161,14 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
 
 
   const onButton1Click = () => {
+    ws?.sendJsonMessage({
+      request: "createUser",
+      username: "Duy",
+      password: "asfasdfa",
+    });
+  };
+
+  const testUser = () => {
     ws?.sendJsonMessage({
       request: "createUser",
       username: "Duy",
@@ -217,6 +228,13 @@ function GameSession({ ws, lobby }: { ws: WS; lobby: any }) {
           </div>
         </div>
       </div>
+      <button
+        type="button"
+        className="p-3 bg-orange-500 text-white rounded-lg"
+        onClick={testUser}
+      >
+        Testing
+      </button>
       <button
         type="button"
         className="p-3 bg-orange-500 text-white rounded-lg"
