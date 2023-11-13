@@ -9,16 +9,24 @@ import useLobbyScreen from 'hooks/useLobbyScreen';
 export default function LobbyScreen({
   ws,
   setIsGameStarted,
+  lobbies,
+  setLobbies,
+  user,
+  setUser,
+  setCurrentGameLobbyName,
 }: {
   ws: WS;
   setIsGameStarted: Dispatch<SetStateAction<boolean>>;
+  lobbies?: Lobby;
+  setLobbies: Dispatch<SetStateAction<Lobby | undefined>>;
+  user: string;
+  setUser: Dispatch<SetStateAction<string>>;
+  setCurrentGameLobbyName: Dispatch<SetStateAction<string | undefined>>;
 }) {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [lobbyNameInput, setLobbyNameInput] = useState('');
-  const [lobbies, setLobbies] = useState<Lobby>();
   const [room, setRoom] = useState<string>();
-  const [user, setUser] = useState('');
   const [isReady, setIsReady] = useState(false);
   const [allUsersStatus, setAllUserStatus] = useState<UserReady>();
   const [userMess, setUserMess] = useState<{
@@ -74,7 +82,10 @@ export default function LobbyScreen({
       } else if (data?.responseFor === 'joinLobby') {
         // This ws last message is about a new player has joined the room
         if (data?.success === 'true') {
-          onToggleReady({ username: user, lobbyName: data.lobby_name ?? '' });
+          const tracker = JSON.parse(data.ready_tracker ?? '') as UserReady;
+          const status = tracker[user] as unknown as boolean;
+          setIsReady(status);
+          setAllUserStatus(tracker);
           setRoom(data.lobby_name);
           setUserMess({
             message: `${data.username ?? ''} has now joined room ${data.lobby_name ?? ''}`,
@@ -113,6 +124,7 @@ export default function LobbyScreen({
             message: `The game is now started`,
             type: 'INFO',
           });
+          setCurrentGameLobbyName(room);
         } else {
           setIsGameStarted(false);
           setUserMess({
@@ -120,9 +132,6 @@ export default function LobbyScreen({
             type: 'ERROR',
           });
         }
-      } else if (data?.responseFor === 'cardShuffled') {
-        // This ws last message is about the game has been initialized cards being shuffled
-        console.log(data);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
