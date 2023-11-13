@@ -1,0 +1,45 @@
+# Test scenario requests user 1
+
+{
+    "request": "createUser",
+    "username": "Dakota"
+}
+
+{
+    "request": "createLobby",
+    "lobby_name": "lobby1",
+    "username": "Dakota"
+}
+
+{
+    "request": "toggleReady",
+    "username": "Dakota",
+    "lobby_name": "lobby1"
+}
+
+
+
+{
+    "request": "startGame",
+    "username": "Dakota",
+    "lobby_name": "lobby1"
+}
+
+
+
+{
+    "request": "rolledDice",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "dice_roll": "1"
+}
+
+
+
+{
+    "request": "characterSelect",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "chosenCharacter": "Mr. Green"
+}
+

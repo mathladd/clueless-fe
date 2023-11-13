@@ -1,6 +1,6 @@
 # Tiles are grid units on a board
 # Can be a room or hallyway tile
-import Tile
+from Tile import Tile
 import random
 
 class GameBoard:
@@ -19,9 +19,6 @@ class GameBoard:
 
         self.winning_combo = [] 
 
-        # Fill this with player lobby order for dice roll
-        self.dice_roll_order = []
-
         # To be filled in after dice roll.
         self.turn_order = []
 
@@ -35,41 +32,41 @@ class GameBoard:
         self.current_suggester = None
 
         # 2D Game room grid
-        rows, cols = (5, 5)
-        self.game_board = [[0]*cols]*rows
-
-        # Assign rooms to board
-
-    def setup_board(self):
-        None
-        room_cords = [
-            (0,0), (0,2), (0,4),
-            (2,0), (2,2), (2,4),
-            (4,0), (4,2), (4,4)
+        self.rows, self.cols = (5, 5)
+        self.game_board = [[None for i in range(self.rows)] for i in range(self.cols)]
+        
+        # gameboard character order
+        self.game_board_character_order = [
+            "Miss Scarlett", "Colonel Mustard", 
+            "Mrs. White", "Mr. Green", 
+            "Mrs. Peacock", "Professor Plum"
         ]
 
-        # for loop over board
-        #     if coords is in room_cords
-        #         assign rooms to specific coords
-        #     else
-        #         assign as a regular hallway tile
+    # Assign rooms to board
+    def setup_board(self):
+        room_array = [
+            ["Study", "Hallway", "Hall", "Hallway", "Lounge"],
+            ["Hallway", None, "Hallway", None, "Hallway"],
+            ["Library", "Hallway", "Billiard Room", "Hallway", "Dining Room"],
+            ["Hallway", None, "Hallway", None, "Hallway"],
+            ["Conservatory", "Hallway", "Ball-room", "Hallway", "Kitchen"]
+        ]
+        for i in range(self.rows):
+            for j in range(self.cols):
+                self.game_board[i][j] = Tile(room_array[i][j])
 
-                    # new_tile = Tile("Hallway")
-                    # if a player is miss scarlet:
-                    #     new_tile.player.append(player.username)
+        return self.get_gameboard()
 
-        # Response {
-        #   "0,0": {
-        #           "name": kitchen,
-        #           "players": [],
-        #           "weapons": []
-        #        },
-        #   "0,1": {
-        #           "name": "hallway",
-        #           "players": ["Hashem"]
-        #        }
-        # }    
-
+    def get_gameboard(self):
+        response = {}
+        for i in range(self.rows):
+            for j in range(self.cols):
+                response[str(i) + "," + str(j)] = {
+                    "name": self.game_board[i][j].tile_name,
+                    "players": self.game_board[i][j].players,
+                    "weapons": self.game_board[i][j].weapons,
+                }
+        return response
 
 
     def select_murder_scene(self):

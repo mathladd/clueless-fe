@@ -38,6 +38,7 @@ async def handler(websocket):
                 await broad_cast(get_waiting_room_sockets(), str(json.dumps(response, indent = 4)))
                 # do not return since we have to send message to player
                 # who created lobby
+            send_to_requester = False
 
         elif json_object['request'] == 'joinLobby':
             response = await join_lobby(json_object)
@@ -61,15 +62,93 @@ async def handler(websocket):
             response = await start_game(json_object)
             if response['success'] == 'true':
                 websockets = lobbies[json_object['lobby_name']].get_websockets()
+                # send distributed cards to players
                 await broad_cast(websockets, str(json.dumps(response, indent = 4)))
                 # return since we sent messages to all who are in lobby
                 send_to_requester = False
 
-                # Get player turn order from lobby for dice roll
-                lobbies[json_object['lobby_name']].GameBoard.do_next_dice_roll()
-        
+                # Build Dice roll order
+                lobbies[json_object['lobby_name']].build_dice_roll_order()
+                next_roller = lobbies[json_object['lobby_name']].get_next_dice_roller()
+
+                # Kick off dice rolling phase
+                response = {
+                    "responseFor": "rolledDice",
+                    "dicePhase": "startingDiceRoll",
+                    "currentTurn": next_roller
+                }
+
+                # send broadcast of turn for next dice roller
+                await broad_cast(websockets, str(json.dumps(response, indent = 4)))
+
         # Game sequence api calls
-        # elif json_object['request'] == 'rolledDice':
+        elif json_object['request'] == 'rolledDice':
+            # Get dice results
+            result = await handle_dice_roll(json_object)
+            
+            # Get websockets for broadcast
+            websockets = lobbies[json_object['lobby_name']].get_websockets()
+            send_to_requester = False
+
+            # if tie, broadcast tied result, then kick off dice roll phase again
+            if result["highest_rolled"] == "tie":
+                lobbies[json_object['lobby_name']].build_dice_roll_order()
+                next_roller = lobbies[json_object['lobby_name']].get_next_dice_roller()
+
+                # Kick off dice rolling phase
+                response = result
+                response["currentTurn"] = next_roller
+                response["dicePhase"] = "startingDiceRoll"
+                response["responseFor"] = "rolledDice"
+      
+            # if still rolling dice, send next plauer turn for dice roll
+            elif result["dicePhase"] == "rollingDice":
+                response = result
+            
+            # if not tie, return highest rolled and build turn order            
+            else:
+                response =  {
+                    "responseFor": "rolledDice",
+                    "dicePhase": "finishedDiceRoll",
+                    "highest_roller": result["highest_roller"],
+                    "highest_rolled": result["highest_rolled"],
+                    "diceTracker": lobbies[json_object['lobby_name']].dice_tracker
+                }
+
+            await broad_cast(websockets, str(json.dumps(response, indent = 4)))
+
+            # Kick off character selectino phase
+            if response["dicePhase"] == "finishedDiceRoll":
+                response = {
+                    "responseFor": "characterSelect",
+                    "currentTurn": lobbies[json_object['lobby_name']].get_next_character_selector(),
+                    "characters": lobbies[json_object['lobby_name']].character_selection_list
+                }
+                await broad_cast(websockets, str(json.dumps(response, indent = 4)))  
+
+        elif json_object['request'] == 'characterSelect':
+            websockets = lobbies[json_object['lobby_name']].get_websockets()
+            send_to_requester = False
+            result = await handle_character_selection(json_object)
+            response = result
+            await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
+           
+            # Setup gameboard, and determine turn order
+            if result["characterSelectionPhase"] == "finished":
+                response = {
+                    "responseFor": "renderBoard",
+                    "gameBoard": lobbies[json_object['lobby_name']].GameBoard.setup_board()
+                }
+                await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
+               
+                lobbies[json_object['lobby_name']].build_turn_order()
+
+                response = {
+                    "responseFor": "currentTurn",
+                    "currentTurn": lobbies[json_object['lobby_name']].get_next_player_turn()
+                }   
+
+                await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
 
 
         ## Debugging API Calls
@@ -185,12 +264,8 @@ async def join_lobby(json_object):
             "username": username,
             "lobbies": get_lobbies(),
             "responseFor": "joinLobby",
-            # TODO: Test to make sure it converts to JSON correctly
             "lobbyReadyStatus": lobbies[lobby_name].get_ready_tracker()
         }
-
-        # TODO: BroadCast to everyone in lobby player has joined
-        # 
 
     else:
         response = {
@@ -225,9 +300,7 @@ async def start_game(json_object):
 
     # Check if the player list in the lobby is greater than 1
     if len(current_lobby.players) > 1 and current_lobby.host.username == username:
-        
         ready_tracker = current_lobby.get_ready_tracker()
-
         # Check if all players ready status is True
         for key, val in ready_tracker.items():
             if val is False:
@@ -237,7 +310,6 @@ async def start_game(json_object):
                     "responseFor": "startGame"
                 }
                 return response
-            
         # All players are ready
         gameboard_data = current_lobby.start_game()
         response = {
@@ -246,14 +318,65 @@ async def start_game(json_object):
             "gameboard_data": gameboard_data,
             "responseFor": "startGame"
         }
-
     else:
         response = {
             "success": "false",
             "message": "not enough players",
             "responseFor": "startGame"
+        }  
+    return response
+
+async def handle_dice_roll(json_object):
+    lobby_name = json_object['lobby_name']
+    username = json_object['username']
+    dice_roll = json_object['dice_roll']
+    current_lobby = lobbies[lobby_name]
+    response = None
+    next_roller = None
+    current_lobby.add_rolled_dice(username, dice_roll)
+
+    # get next dice roller if available
+    if len(current_lobby.dice_roll_order) > 0:
+        next_roller = current_lobby.get_next_dice_roller()
+        response = {
+            "responseFor": "rolledDice",
+            "dicePhase": "rollingDice",
+            "currentTurn": next_roller,
+            "highest_rolled": "None",
+            "diceTracker": current_lobby.dice_tracker
         }
-        
+
+    # if not available, then dice rolls finished, calculate order
+    else:
+        response = current_lobby.get_highest_dice_roller()
+
+    return response
+
+async def handle_character_selection(json_object):
+    lobby_name = json_object['lobby_name']
+    username = json_object['username']
+    current_lobby = lobbies[lobby_name]
+    chosen_character = json_object['chosenCharacter']
+    response = None
+
+    current_lobby.assign_character_to_player(username, chosen_character)
+    current_lobby.delete_character_from_selection(chosen_character)
+
+    if len(current_lobby.character_selection_order) > 0:
+        response = {
+            "responseFor": "characterSelect",
+            "currentTurn": current_lobby.get_next_character_selector(),
+            "characters": current_lobby.character_selection_list,
+            "characterSelectionPhase": "selecting"
+        }
+    else:
+        response = {
+            "responseFor": "characterSelect",
+            "currentTurn": "",
+            "characters": "",
+            "characterSelectionPhase": "finished"
+        }
+
     return response
 
 def get_users():

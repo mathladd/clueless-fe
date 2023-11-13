@@ -1,0 +1,32 @@
+# Test scenario requests user 1
+
+{
+    "request": "createUser",
+    "username": "Shaheer"
+}
+
+{
+    "request": "joinLobby",
+    "username": "Shaheer",
+    "lobby_name": "lobby1"
+}
+
+{
+    "request": "toggleReady",
+    "username": "Shaheer",
+    "lobby_name": "lobby1"
+}
+
+{
+    "request": "rolledDice",
+    "username": "Shaheer",
+    "lobby_name": "lobby1",
+    "dice_roll": "6"
+}
+
+{
+    "request": "characterSelect",
+    "username": "Shaheer",
+    "lobby_name": "lobby1",
+    "chosenCharacter": "Professor Plum"
+}
