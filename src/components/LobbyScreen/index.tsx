@@ -13,8 +13,7 @@ export default function LobbyScreen({
   setLobbies,
   user,
   setUser,
-  currentGameLobby,
-  setCurrentGameLobby,
+  setCurrentGameLobbyName,
 }: {
   ws: WS;
   setIsGameStarted: Dispatch<SetStateAction<boolean>>;
@@ -22,8 +21,7 @@ export default function LobbyScreen({
   setLobbies: Dispatch<SetStateAction<Lobby | undefined>>;
   user: string;
   setUser: Dispatch<SetStateAction<string>>;
-  currentGameLobby: Lobby | undefined;
-  setCurrentGameLobby: Dispatch<SetStateAction<Lobby | undefined>>;
+  setCurrentGameLobbyName: Dispatch<SetStateAction<string | undefined>>;
 }) {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
@@ -126,7 +124,7 @@ export default function LobbyScreen({
             message: `The game is now started`,
             type: 'INFO',
           });
-          setCurrentGameLobby(lobbies);
+          setCurrentGameLobbyName(room);
         } else {
           setIsGameStarted(false);
           setUserMess({

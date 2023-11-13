@@ -9,15 +9,15 @@ function HomePage({ ws }: { ws: WS }) {
   const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState(false);
   const [lobbies, setLobbies] = useState<Lobby>();
-  const [currentGameLobby, setCurrentGameLobby] = useState<Lobby>();
-  const [user, setUser] = useState('');
+  const [currentGameLobbyName, setCurrentGameLobbyName] = useState<string>();
+  const [user, setUser] = useState<string>('');
 
   useEffect(() => setIsMounted(true), []);
   if (!isMounted) return null;
   return (
     <>
       {isGameStarted || true ? (
-        <GameSession ws={ws} lobby={currentGameLobby} />
+        <GameSession ws={ws} user={user} lobby={currentGameLobbyName} />
       ) : (
         <LobbyScreen
           ws={ws}
@@ -26,8 +26,7 @@ function HomePage({ ws }: { ws: WS }) {
           setLobbies={setLobbies}
           user={user}
           setUser={setUser}
-          currentGameLobby={currentGameLobby}
-          setCurrentGameLobby={setCurrentGameLobby}
+          setCurrentGameLobbyName={setCurrentGameLobbyName}
         />
       )}
       <div />
