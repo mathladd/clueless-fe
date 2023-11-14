@@ -34,6 +34,7 @@ function GameSession({
   const [playerCharacterMapping, setPlayerCharacterMapping] =
     useState<{ username: string | undefined; character: Character | string }[]>();
   const [playerDiceMapping, setPlayerDiceMapping] = useState<{ [key: string]: number }>();
+
   const [diceRole, setDiceRole] = useState(0);
   const [isRerolling, setIsRerolling] = useState(false);
 
