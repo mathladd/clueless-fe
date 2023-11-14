@@ -11,8 +11,8 @@ import Player from './Player';
 type GameStatuses = 'rolledDice' | 'characterSelect';
 
 const statusDisplayMapping: { [key: GameStatuses | string]: string } = {
-  rolledDice: 'Dice roll ongoing...',
-  characterSelect: 'Character selection ongoing...',
+  rolledDice: 'Dice roll',
+  characterSelect: 'Character selection',
 };
 
 function GameSession({
@@ -118,7 +118,9 @@ function GameSession({
           </div>
           <div className="flex space-x-2">
             <div className="text-red-200">
-              {isRerolling ? 'Re-rolling ongoing...' : statusDisplayMapping[gameState]}
+              {isRerolling
+                ? 'Re-rolling ongoing...'
+                : `${statusDisplayMapping[gameState]} ongoing...`}
             </div>
           </div>
         </div>
