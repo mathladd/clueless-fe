@@ -117,7 +117,7 @@ async def handler(websocket):
 
             await broad_cast(websockets, str(json.dumps(response, indent = 4)))
 
-            # Kick off character selectino phase
+            # Kick off character selection phase
             if response["dicePhase"] == "finishedDiceRoll":
                 response = {
                     "responseFor": "characterSelect",
@@ -145,9 +145,59 @@ async def handler(websocket):
 
                 response = {
                     "responseFor": "currentTurn",
-                    "currentTurn": lobbies[json_object['lobby_name']].get_next_player_turn()
+                    "currentTurn": lobbies[json_object['lobby_name']].turn_order[0]
                 }   
 
+                await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
+
+        elif json_object['request'] == 'characterMove':
+            websockets = lobbies[json_object['lobby_name']].get_websockets()
+            send_to_requester = False
+
+            # response should be character moved successfully
+            response = await handle_character_move(json_object)
+            await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
+           
+            # broadcast updated gameboard
+            response = {
+                    "responseFor": "renderBoard",
+                    "gameBoard": lobbies[json_object['lobby_name']].GameBoard.get_gameboard()
+                }
+                
+            await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
+
+        elif json_object['request'] == 'suggest':
+                websockets = lobbies[json_object['lobby_name']].get_websockets()
+                send_to_requester = False
+
+                # response should be found card and username with card
+                suggested_response = await handle_suggest(json_object)
+
+                # broadcast updated gameboard from moving character into a room if any...
+                response = {
+                        "responseFor": "renderBoard",
+                        "gameBoard": lobbies[json_object['lobby_name']].GameBoard.get_gameboard()
+                    }
+                
+                # Show updated gameboard
+                await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
+
+                # Front end needs to filter to only show suggested cards if suggested username matches
+                await broad_cast(websockets, str(json.dumps(suggested_response, indent = 4))) 
+
+
+            
+
+        elif json_object['request'] == 'nextTurn':
+                websockets = lobbies[json_object['lobby_name']].get_websockets()
+                send_to_requester = False
+
+                # broadcast updated gameboard from moving character into a room if any...
+                response = {
+                        "responseFor": "nextTurn",
+                        "nextTurn": lobbies[json_object['lobby_name']].get_next_player_turn()
+                    }
+                    
                 await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
 
 
@@ -378,6 +428,40 @@ async def handle_character_selection(json_object):
         }
 
     return response
+
+async def handle_character_move(json_object):
+    lobby_name = json_object['lobby_name']
+    username = json_object['username']
+    current_lobby = lobbies[lobby_name]
+    prev_coords = json_object['prev_coords']
+    new_coords = json_object['new_coords']
+
+    # Move character from prev coords to new coords
+    return current_lobby.GameBoard.move_character(username, prev_coords, new_coords)
+
+async def handle_suggest(json_object):
+    lobby_name = json_object['lobby_name']
+    username = json_object['username']
+    current_lobby = lobbies[lobby_name]
+    character = json_object['suggested_character']
+    weapon = json_object['suggested_weapon']
+    room = json_object['suggested_room']
+
+    # Need to move suggested user coords to user_coords for suggestion
+    suggested_username_coords = json_object['suggested_username_coords']
+    suggested_username = json_object['suggested_username']
+    user_coords = json_object['user_coords']
+    # Move character from prev coords to new coords
+    current_lobby.GameBoard.move_character(suggested_username, suggested_username_coords, user_coords)
+    return current_lobby.find_matching_suggests(character, weapon, room, username)
+
+
+
+
+
+
+
+
 
 def get_users():
     usernames = []

@@ -69,9 +69,10 @@ class Lobby:
             self.dice_roll_order.append(player.username)
          
     def get_next_dice_roller(self):
-        next_roller = self.dice_roll_order[0]
+        last_roller = self.dice_roll_order[0]
         del self.dice_roll_order[0]
-        return next_roller
+        return last_roller
+        
     
     def add_rolled_dice(self, username, dice_roll):
         self.dice_tracker[username] = dice_roll
@@ -80,6 +81,7 @@ class Lobby:
         highest_rolled = -1
         highest_roller = None
         
+        # Get highest Rolled
         for key, val in self.dice_tracker.items():
             if int(val) > int(highest_rolled):
                 highest_rolled = val
@@ -103,6 +105,7 @@ class Lobby:
         # Used for building turn queue
         self.dice_winner = highest_roller
 
+        # TODO: Test with 4 players to detect issues with 2nd highest roller being first
         print(self.dice_tracker)
         {k: v for k, v in sorted(self.dice_tracker.items(), key=lambda item: item[1])}
 
@@ -111,6 +114,7 @@ class Lobby:
         for key, val in self.dice_tracker.items():
             print(key)
             self.character_selection_order.append(key)
+        self.character_selection_order.reverse()
 
         return {
             "dicePhase": "finishedRoll",
@@ -160,8 +164,37 @@ class Lobby:
                 if player.character == character:
                     self.turn_order.append(player.username)
 
+    # Pops first element, puts it at the back of the list
     def get_next_player_turn(self):
         next_player = self.turn_order[0]
         del self.turn_order[0]
         self.turn_order.append(next_player)
-        return next_player
+        return self.turn_order[0]
+    
+    def find_matching_suggests(self, character, weapon, room, username):
+        # iterator over turn order and skip suggester
+        found_card = "None"
+        found_player = "None"
+        for user in self.turn_order:
+            player = self.get_player(user)
+            if player.username == username:
+                continue
+            else:
+                if character in player.cards:
+                    found_card = character
+                    found_player = player.username
+                    break
+                elif weapon in player.cards:
+                    found_card = weapon
+                    found_player = player.username
+                    break
+                elif room in player.cards:
+                    found_card = room
+                    found_player = player.username
+                    break
+        return {
+            "responseFor": "suggest",
+            "found_card": found_card,
+            "found_player": found_player,
+            "suggested_username": username
+        }

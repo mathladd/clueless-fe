@@ -18,13 +18,11 @@
 }
 
 
-
 {
     "request": "startGame",
     "username": "Dakota",
     "lobby_name": "lobby1"
 }
-
 
 
 {
@@ -35,11 +33,24 @@
 }
 
 
-
 {
     "request": "characterSelect",
     "username": "Dakota",
     "lobby_name": "lobby1",
     "chosenCharacter": "Mr. Green"
+}
+
+{
+    "request": "characterMove",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "prev_coords": "0,0",
+    "new_coords": "0,1"
+}
+
+{
+    "request": "nextTurn",
+    "username": "Dakota",
+    "lobby_name": "lobby1"
 }
 

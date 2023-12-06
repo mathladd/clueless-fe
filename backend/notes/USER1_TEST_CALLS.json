@@ -30,3 +30,39 @@
     "lobby_name": "lobby1",
     "chosenCharacter": "Professor Plum"
 }
+
+{
+    "request": "characterMove",
+    "username": "Shaheer",
+    "lobby_name": "lobby1",
+    "prev_coords": "0,0",
+    "new_coords": "0,3"
+}
+
+{
+    "request": "nextTurn",
+    "username": "Shaheer",
+    "lobby_name": "lobby1"
+}
+
+{
+    "request": "characterMove",
+    "username": "Shaheer",
+    "lobby_name": "lobby1",
+    "prev_coords": "0,3",
+    "new_coords": "0,4"
+}
+
+{
+    "request": "suggest",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "suggested_character": "Mr. Green",
+    "suggested_weapon": "Candlestick",
+    "suggested_room": "Lounge",
+    "suggested_username": "Dakota",
+    "suggested_username_coords": "0,1",
+    "user_coords: "0,4"
+}
+
+
