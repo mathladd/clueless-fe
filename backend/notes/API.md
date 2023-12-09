@@ -240,3 +240,79 @@ Broadcast Response: {
     "responseFor": "currentTurn",
     "currentTurn": "Shaheer"
 }
+
+# Player movement
+
+Request: 
+{
+    "request": "characterMove",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "prev_coords": "x,y",
+    "new_coords": "x,y"
+}
+
+Broadcast Response: {
+    "responseFor": "characterMove",
+    "username": "Dakota",
+    "status": "success"
+}
+
+
+Broadcast Response: {
+    "responseFor": "renderBoard",
+    "gameBoard": {
+        "0,0": {
+            "name": "Study",
+            "players": [],
+            "weapons": []
+        },
+        
+        ...
+
+        "4,4": {
+            "name": "Kitchen",
+            "players": [],
+            "weapons": []
+        }
+    }
+}
+
+
+
+# Player suggest
+
+Request: 
+{
+    "request": "suggest",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "suggested_character": "Professor Plum",
+    "suggested_weapon": "Candlestick",
+    "suggested_room": "Kitchen",
+    "suggested_username": "Shaheer", // Could be none...
+    "suggested_username_coords": "x,y",
+    "user_coords:"x,y"
+}
+
+Response: 
+{
+    "responseFor": "suggest",
+    "found_card": found_card,
+    "found_player": found_player,
+    "suggested_username": "Dakota"
+}
+
+# Next Turn
+Request:
+{
+    "request": "nextTurn",
+    "username": "Shaheer",
+    "lobby_name": "lobby1"
+}
+
+Response 
+{
+    "responseFor": "nextTurn",
+    "nextTurn": "Dakota"
+}

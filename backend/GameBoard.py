@@ -68,7 +68,6 @@ class GameBoard:
                 }
         return response
 
-
     def select_murder_scene(self):
         random.shuffle(self.weapon_cards)
         random.shuffle(self.room_cards)
@@ -107,4 +106,28 @@ class GameBoard:
         # player_and_cards = player names + cards they have
         # left_over_cards has all left over cards
 
-    
+    def move_character(self, username, prev_coords, new_coords):
+        # extract prev coords
+        prev_x = int(prev_coords[0])
+        prev_y = int(prev_coords[2])
+        
+        # extrac new coords
+        new_x = int(new_coords[0])
+        new_y = int(new_coords[2])
+
+        # get index of username in tile players list and delete
+        prev_tile_players_list = self.game_board[prev_x][prev_y].players
+        for i in range(len(prev_tile_players_list)):
+            if username == prev_tile_players_list[i]:
+                del prev_tile_players_list[i]
+                break
+        
+        # add player to new tile on
+        new_tile_players_list = self.game_board[new_x][new_y].players
+        new_tile_players_list.append(username)
+
+        return {
+            "responseFor": "characterMove",
+            "username": username,
+            "status": "success"
+        }
