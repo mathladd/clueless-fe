@@ -23,8 +23,35 @@ class Player:
 
         # Every card is a true possibilty unless marked false by player
         self.clue_sheet = {
-            "card1" : True,
+            "Study" : True,
+            "Hall" : True,
+            "Lounge" : True,
+            "Library" : True,
+            "Billiard Room" : True,
+            "Dining Room" : True,
+            "Conservatory" : True,
+            "Ball-room" : True,
+            "Kitchen" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
+            "card2" : True,
             "card2" : True
+            
         }
 
     ## Player State functionality

@@ -198,3 +198,20 @@ class Lobby:
             "found_player": found_player,
             "suggested_username": username
         }
+    
+
+    def get_winning_combo(self):
+        return self.GameBoard.winning_combo
+    
+    def compare_winning_combo(self, character, weapon, room):
+        winning_combo = self.get_winning_combo()
+        accused_list = [character, weapon, room]
+        accused_list.sort()
+        winning_combo.sort()
+        print(accused_list)
+        print(winning_combo)
+        if winning_combo == accused_list:
+            return True
+        else:
+            return False
+

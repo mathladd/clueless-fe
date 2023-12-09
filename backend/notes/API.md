@@ -267,8 +267,6 @@ Broadcast Response: {
     }
 }
 
-
-
 # Player suggest
 
 Request: 
@@ -290,6 +288,29 @@ Response:
     "found_card": found_card,
     "found_player": found_player,
     "suggested_username": "Dakota"
+}
+
+# Accuse
+
+Request:
+{
+    "request": "accuse",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "accused_character": "Professor Plum",
+    "accused_weapon": "Candlestick",
+    "accused_room": "Lounge",
+}
+
+{
+    "responseFor": "accuse",
+    "result": "True" or "False"
+}
+
+## If True
+
+{
+    "responseFor": "gameOver"
 }
 
 # Next Turn

@@ -185,9 +185,35 @@ async def handler(websocket):
                 # Front end needs to filter to only show suggested cards if suggested username matches
                 await broad_cast(websockets, str(json.dumps(suggested_response, indent = 4))) 
 
+        elif json_object['request'] == 'accuse':
+                websockets = lobbies[json_object['lobby_name']].get_websockets()
+                send_to_requester = False
 
+                # response should be found card and username with card
+                accuse_response = await handle_accuse(json_object)
+
+                # TODO: Find out what to do with board of character if false...
+                if accuse_response['result'] == 'False':
+                    # broadcast updated gameboard if player was removed for false accuse
+                    response = {
+                            "responseFor": "renderBoard",
+                            "gameBoard": lobbies[json_object['lobby_name']].GameBoard.get_gameboard()
+                        }
+                    
+                    # Show updated gameboard
+                    await broad_cast(websockets, str(json.dumps(response, indent = 4))) 
+
+                # Send result of accusation
+                await broad_cast(websockets, str(json.dumps(accuse_response, indent = 4))) 
+
+                # If result is true, send gameover response
+                if accuse_response['result'] == 'True':
+                    game_over_response = {
+                        'responseFor': 'gameOver'
+                    }
+                    await broad_cast(websockets, str(json.dumps(game_over_response, indent = 4))) 
+                    # TODO: Perform lobby and gameboard cleanup...
             
-
         elif json_object['request'] == 'nextTurn':
                 websockets = lobbies[json_object['lobby_name']].get_websockets()
                 send_to_requester = False
@@ -207,6 +233,9 @@ async def handler(websocket):
 
         elif json_object['request'] == 'getLobbies':
              response = get_lobbies()
+
+        elif json_object['request'] == 'getWinningCombo':
+             response = get_winning_combo(json_object)
 
         # Not Implemented
         else:
@@ -455,13 +484,33 @@ async def handle_suggest(json_object):
     current_lobby.GameBoard.move_character(suggested_username, suggested_username_coords, user_coords)
     return current_lobby.find_matching_suggests(character, weapon, room, username)
 
+async def handle_accuse(json_object):
+    lobby_name = json_object['lobby_name']
+    username = json_object['username']
+    current_lobby = lobbies[lobby_name]
+    character = json_object['accused_character']
+    weapon = json_object['accused_weapon']
+    room = json_object['accused_room']
 
 
+    result = current_lobby.compare_winning_combo(character, weapon, room)
+    if result == True:
+        return {
+            "responseFor": "accuse",
+            "result": "True",
+        }
+    else:
+        # Delete character from turn order
+        for i in range(len(current_lobby.turn_order)):
+            if current_lobby.turn_order[i] is username:
+                del current_lobby.turn_order[i]
+                break
 
-
-
-
-
+        return {
+            "responseFor": "accuse",
+            "result": "False",
+        }
+    
 
 def get_users():
     usernames = []
@@ -477,6 +526,16 @@ def get_lobbies():
             lobby_players.append(player.username)
         lobbies_data[key] = lobby_players
     return lobbies_data
+
+def get_winning_combo(json_object):
+    lobby_name = json_object['lobby_name']
+    current_lobby = lobbies[lobby_name]
+    response = {
+        "lobby_name": lobby_name,
+        "winning_combo": current_lobby.get_winning_combo()
+    }
+    return response
+
 
 # Use task = asyncio.create_task(ping(websocket))
 async def ping(websocket):
