@@ -13,6 +13,7 @@ type GameStatuses = 'rolledDice' | 'characterSelect' | 'coreLoop';
 const statusDisplayMapping: { [key: GameStatuses | string]: string } = {
   rolledDice: 'Dice roll',
   characterSelect: 'Character selection',
+  coreLoop: 'Game',
 };
 
 function GameSession({
@@ -64,6 +65,7 @@ function GameSession({
         setAvailableCharacters(data?.characters);
       } else if (data?.responseFor === 'currentTurn') {
         setGameState('coreLoop');
+        setCurrentPlayerTurn(data?.currentTurn);
       }
     }
   }, [ws?.lastMessage?.data]);
@@ -127,6 +129,22 @@ function GameSession({
     );
   }, [gameBoard?.player_cards]);
 
+  const isGameDisabled = gameState !== 'coreLoop' || currentPlayerTurn !== username;
+
+  const onMoveTo = () => {
+    ws?.sendJsonMessage({
+      request: 'characterMove',
+      username,
+      lobby_name: lobby,
+      prev_coords: '',
+      new_coords: '',
+    });
+  };
+
+  const onAccuse = () => {};
+
+  const onSuggest = () => {};
+
   if (!username || !lobby || !gameBoard) return null;
   return (
     <div>
@@ -156,7 +174,41 @@ function GameSession({
           </div>
         </div>
       </div>
-      <div className="flex flex-col p-8 space-y-8">
+
+      <div className="flex px-8 pt-2 space-x-2">
+        <button
+          type="button"
+          className={`px-4 py-2 text-white transition rounded-lg bg-slate-600 ${
+            isGameDisabled ? '' : 'hover:bg-slate-500'
+          } disabled:opacity-30`}
+          onClick={onMoveTo}
+          disabled={isGameDisabled}
+        >
+          Move to...
+        </button>
+        <button
+          type="button"
+          className={`px-4 py-2 text-white transition rounded-lg bg-slate-600 ${
+            isGameDisabled ? '' : 'hover:bg-slate-500'
+          } disabled:opacity-30`}
+          onClick={onSuggest}
+          disabled={isGameDisabled}
+        >
+          Suggest...
+        </button>
+        <button
+          type="button"
+          className={`px-4 py-2 text-white transition rounded-lg bg-rose-800  ${
+            isGameDisabled ? '' : 'hover:bg-rose-700'
+          } disabled:opacity-30`}
+          onClick={onAccuse}
+          disabled={isGameDisabled}
+        >
+          Accuse!!
+        </button>
+      </div>
+
+      <div className="flex flex-col px-8 pt-2 space-y-8">
         <div className="flex flex-col space-y-4">
           <div className="p-4 space-y-4 rounded-lg w-fit bg-emerald-900 text-slate-200">
             <div>
@@ -210,47 +262,29 @@ function GameSession({
             </div>
           </div>
         </div>
-        <GameBoard />
+        <div className="relative m-auto mt-4">
+          <div className="absolute  w-[660px] h-[510px] opacity-50 flex flex-col">
+            <div className="flex w-full h-full">
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+            </div>
+            <div className="flex w-full h-full">
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+            </div>
+            <div className="flex w-full h-full">
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+            </div>
+          </div>
+          <GameBoard />
+        </div>
       </div>
     </div>
   );
-  // return (
-  // <Container>
-  //   <Row>
-  //     <Col>{user}</Col>
-  //   </Row>
-  //   <Row>
-  //     <Col>
-  //       <Navbar />
-  //     </Col>
-  //   </Row>
-  //   <Row>
-  //     <Col>
-  //       <UserRibbon users={sessionUsers} currentPlayer={currentPlayerTurn} />
-  //     </Col>
-  //   </Row>
-  //   <Row className="justify-content-md-center">
-  //     <Col>
-  //       <GameBoard />
-  //       {currentPlayerTurn === user && gameState === 'Dice Role' ? (
-  //         <DiceModal inputValue={diceRole} onInputValueChange={setDiceRole} />
-  //       ) : (
-  //         ''
-  //       )}
-  //       {gameState === 'Character Select' ? (
-  //         <CharacterSelectModal inputValue={character} onInputValueChange={setCharacter} />
-  //       ) : (
-  //         ''
-  //       )}
-  //     </Col>
-  //   </Row>
-  //   <Row className="justify-content-md-center">
-  //     <Col>
-  //       <GameCards cardDeck={['', '', '', '']} />
-  //     </Col>
-  //   </Row>
-  // </Container>
-  // );
 }
 
 export default GameSession;

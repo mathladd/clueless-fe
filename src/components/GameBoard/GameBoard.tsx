@@ -24,9 +24,7 @@ function GameBoard() {
     };
   }, []);
 
-  return (
-    <canvas style={{ marginRight: 'auto', marginLeft: 'auto', display: 'block' }} ref={canvasRef} />
-  );
+  return <canvas ref={canvasRef} />;
 }
 
 export default GameBoard;

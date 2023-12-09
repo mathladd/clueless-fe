@@ -61,4 +61,7 @@ export type WSResponse = {
   highest_rolled?: string;
   characters?: Character[];
   characterSelectionPhase?: 'finished';
+
+  prev_coords?: string;
+  new_coords?: string;
 };
