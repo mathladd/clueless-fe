@@ -54,3 +54,12 @@
     "lobby_name": "lobby1"
 }
 
+{
+    "request": "accuse",
+    "username": "Dakota",
+    "lobby_name": "lobby1",
+    "accused_character": "Mr. Green",
+    "accused_weapon": "Candlestick",
+    "accused_room": "Lounge",
+}
+
