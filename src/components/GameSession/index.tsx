@@ -1,5 +1,7 @@
+/* eslint-disable max-lines */
 import React, { useState, useEffect } from 'react';
-import { WS, WSResponse } from 'types/common';
+import { Spinner } from '@chakra-ui/react';
+import { GameBoardRes, WS, WSResponse } from 'types/common';
 import { Character, GameBoardSetup, CHARACTERS } from 'types/game';
 import GameBoard from '../GameBoard/GameBoard';
 import CharacterSelectModal from '../CharacterSelect/index';
@@ -9,6 +11,21 @@ import Card from './Card';
 import Player from './Player';
 
 type GameStatuses = 'rolledDice' | 'characterSelect' | 'coreLoop';
+
+function MovableButton({ isDisabled, onClick }: { isDisabled: boolean; onClick: () => void }) {
+  return (
+    <button
+      className={`w-full h-full transition ${
+        isDisabled ? '' : 'cursor-pointer hover:bg-yellow-200'
+      }`}
+      type="button"
+      disabled={isDisabled}
+      onClick={onClick}
+    >
+      {}
+    </button>
+  );
+}
 
 const statusDisplayMapping: { [key: GameStatuses | string]: string } = {
   rolledDice: 'Dice roll',
@@ -47,6 +64,10 @@ function GameSession({
 
   const [gameState, setGameState] = useState<GameStatuses>('rolledDice');
 
+  const [renderedBoard, setRenderedBoard] = useState<GameBoardRes>();
+  const [playerLocationMapping, setPlayerLocationMapping] =
+    useState<{ username: string; currentCoord: string }[]>();
+
   const onSetChar = (c: Character) => [setSelectedCharacter(c)];
 
   useEffect(() => {
@@ -66,6 +87,9 @@ function GameSession({
       } else if (data?.responseFor === 'currentTurn') {
         setGameState('coreLoop');
         setCurrentPlayerTurn(data?.currentTurn);
+      } else if (data?.responseFor === 'renderBoard') {
+        setGameState('coreLoop');
+        setRenderedBoard(data?.gameBoard as GameBoardRes);
       }
     }
   }, [ws?.lastMessage?.data]);
@@ -131,13 +155,27 @@ function GameSession({
 
   const isGameDisabled = gameState !== 'coreLoop' || currentPlayerTurn !== username;
 
-  const onMoveTo = () => {
+  useEffect(() => {
+    !!renderedBoard &&
+      setPlayerLocationMapping(
+        playerCharacterMapping?.map((player) => ({
+          username: player?.username ?? '',
+          currentCoord: player?.username
+            ? Object.entries(renderedBoard).filter((loc) =>
+                loc[1].players.includes(player?.username),
+              )?.[0]?.[0]
+            : '0,0',
+        })),
+      );
+  }, [playerCharacterMapping, renderedBoard]);
+
+  const onMoveTo = (cord: string) => {
     ws?.sendJsonMessage({
       request: 'characterMove',
       username,
       lobby_name: lobby,
-      prev_coords: '',
-      new_coords: '',
+      prev_coords: renderedBoard,
+      new_coords: cord,
     });
   };
 
@@ -176,16 +214,6 @@ function GameSession({
       </div>
 
       <div className="flex px-8 pt-2 space-x-2">
-        <button
-          type="button"
-          className={`px-4 py-2 text-white transition rounded-lg bg-slate-600 ${
-            isGameDisabled ? '' : 'hover:bg-slate-500'
-          } disabled:opacity-30`}
-          onClick={onMoveTo}
-          disabled={isGameDisabled}
-        >
-          Move to...
-        </button>
         <button
           type="button"
           className={`px-4 py-2 text-white transition rounded-lg bg-slate-600 ${
@@ -262,22 +290,72 @@ function GameSession({
             </div>
           </div>
         </div>
-        <div className="relative m-auto mt-4">
-          <div className="absolute  w-[660px] h-[510px] opacity-50 flex flex-col">
+        <div
+          className={`relative m-auto my-4 ${currentPlayerTurn === username ? '' : 'opacity-50'}`}
+        >
+          {currentPlayerTurn !== username && (
+            <div className="absolute flex items-center justify-center w-full h-full">
+              <Spinner size="xl" color="black" thickness="10px" speed="1s" />
+            </div>
+          )}
+          <div className="absolute  w-[655px] h-[510px] opacity-50 flex flex-col">
             <div className="flex w-full h-full">
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              {Array(5)
+                .fill(0)
+                .map((i, index) => (
+                  <MovableButton
+                    isDisabled={currentPlayerTurn !== username}
+                    onClick={() => onMoveTo(`0, ${index}`)}
+                  />
+                ))}
             </div>
             <div className="flex w-full h-full">
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              {Array(5)
+                .fill(0)
+                .map((i, index) =>
+                  ![1, 3].includes(index) ? (
+                    <MovableButton
+                      isDisabled={currentPlayerTurn !== username}
+                      onClick={() => onMoveTo(`1, ${index}`)}
+                    />
+                  ) : (
+                    <div className="w-full h-full" />
+                  ),
+                )}
             </div>
             <div className="flex w-full h-full">
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
-              <div className="w-full h-full transition cursor-pointer hover:bg-yellow-200" />
+              {Array(5)
+                .fill(0)
+                .map((i, index) => (
+                  <MovableButton
+                    isDisabled={currentPlayerTurn !== username}
+                    onClick={() => onMoveTo(`2, ${index}`)}
+                  />
+                ))}
+            </div>
+            <div className="flex w-full h-full">
+              {Array(5)
+                .fill(0)
+                .map((i, index) =>
+                  ![1, 3].includes(index) ? (
+                    <MovableButton
+                      isDisabled={currentPlayerTurn !== username}
+                      onClick={() => onMoveTo(`3, ${index}`)}
+                    />
+                  ) : (
+                    <div className="w-full h-full" />
+                  ),
+                )}
+            </div>
+            <div className="flex w-full h-full">
+              {Array(5)
+                .fill(0)
+                .map((i, index) => (
+                  <MovableButton
+                    isDisabled={currentPlayerTurn !== username}
+                    onClick={() => onMoveTo(`4, ${index}`)}
+                  />
+                ))}
             </div>
           </div>
           <GameBoard />

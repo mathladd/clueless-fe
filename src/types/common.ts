@@ -44,6 +44,15 @@ export type WS = {
   readyState: ReadyState;
 };
 
+
+export type GameBoardRes = {
+  [key: string]: {
+    name: string;
+    players: string[];
+    weapons: string[];
+  };
+}
+
 export type WSResponse = {
   responseFor?: string;
   success?: string;
@@ -62,6 +71,5 @@ export type WSResponse = {
   characters?: Character[];
   characterSelectionPhase?: 'finished';
 
-  prev_coords?: string;
-  new_coords?: string;
+  gameBoard: ;
 };
