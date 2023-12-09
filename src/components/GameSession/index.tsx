@@ -12,18 +12,38 @@ import Player from './Player';
 
 type GameStatuses = 'rolledDice' | 'characterSelect' | 'coreLoop';
 
-function MovableButton({ isDisabled, onClick }: { isDisabled: boolean; onClick: () => void }) {
+function MovableButton({
+  isDisabled,
+  coord,
+  onMoveTo,
+  playerLocationMapping,
+}: {
+  isDisabled: boolean;
+  coord: string;
+  onMoveTo: (cord: string) => void;
+  playerLocationMapping: { username: string; currentCoord: string }[] | undefined;
+}) {
+  const players = playerLocationMapping?.filter((i) => i.currentCoord === coord);
   return (
-    <button
-      className={`w-full h-full transition ${
-        isDisabled ? '' : 'cursor-pointer hover:bg-yellow-200'
-      }`}
-      type="button"
-      disabled={isDisabled}
-      onClick={onClick}
-    >
-      {}
-    </button>
+    <div className="relative flex w-full h-full" key={coord}>
+      <button
+        className={`absolute w-full h-full transition opacity-50 ${
+          isDisabled ? '' : 'cursor-pointer hover:bg-yellow-200 z-10'
+        }`}
+        type="button"
+        disabled={isDisabled}
+        onClick={() => onMoveTo(coord)}
+      >
+        {}
+      </button>
+      <div className="absolute z-0 flex flex-wrap items-center justify-center w-full h-full space-x-2">
+        {players?.map((player) => (
+          <div className="flex items-center justify-center w-10 h-10 text-sm text-white rounded-full bg-slate-700">
+            <div className="w-fit bg-slate-700">{String(player?.username)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -97,7 +117,21 @@ function GameSession({
   useEffect(() => {
     if (ws?.lastMessage?.data) {
       const data = JSON.parse(String(ws?.lastMessage?.data)) as WSResponse;
-      if (
+      if (data?.responseFor === 'characterSelect' && data?.characterSelectionPhase === 'finished') {
+        const lastPlayer = playerCharacterMapping?.find((i) => i.character === '')?.character;
+        if (lastPlayer) {
+          const currentMapping = playerCharacterMapping?.filter((i) => i.character !== '');
+          const newMapping = currentMapping?.concat([
+            {
+              username: lastPlayer,
+              character:
+                prevTurnAvailableChars?.find((c) => !availableCharacters?.includes(c)) ?? '',
+            },
+          ]);
+          setPlayerCharacterMapping(newMapping);
+          setPrevTurnAvailableChars(availableCharacters);
+        }
+      } else if (
         data?.responseFor === 'characterSelect' &&
         availableCharacters?.length !== prevTurnAvailableChars?.length
       ) {
@@ -160,21 +194,23 @@ function GameSession({
       setPlayerLocationMapping(
         playerCharacterMapping?.map((player) => ({
           username: player?.username ?? '',
-          currentCoord: player?.username
-            ? Object.entries(renderedBoard).filter((loc) =>
-                loc[1].players.includes(player?.username),
-              )?.[0]?.[0]
-            : '0,0',
+          currentCoord:
+            Object.entries(renderedBoard).filter((loc) =>
+              loc[1].players.includes(player?.username ?? ''),
+            )?.[0]?.[0] ?? '0,0',
         })),
       );
   }, [playerCharacterMapping, renderedBoard]);
+
+  console.log('playerLocationMapping', playerLocationMapping);
 
   const onMoveTo = (cord: string) => {
     ws?.sendJsonMessage({
       request: 'characterMove',
       username,
       lobby_name: lobby,
-      prev_coords: renderedBoard,
+      prev_coords:
+        playerLocationMapping?.find((i) => i.username === username)?.currentCoord ?? '0,0',
       new_coords: cord,
     });
   };
@@ -298,62 +334,72 @@ function GameSession({
               <Spinner size="xl" color="black" thickness="10px" speed="1s" />
             </div>
           )}
-          <div className="absolute  w-[655px] h-[510px] opacity-50 flex flex-col">
-            <div className="flex w-full h-full">
+          <div className="absolute  w-[655px] h-[510px] flex flex-col">
+            <div className="relative flex w-full h-full">
               {Array(5)
                 .fill(0)
                 .map((i, index) => (
                   <MovableButton
                     isDisabled={currentPlayerTurn !== username}
-                    onClick={() => onMoveTo(`0, ${index}`)}
+                    coord={`0,${index}`}
+                    onMoveTo={onMoveTo}
+                    playerLocationMapping={playerLocationMapping}
                   />
                 ))}
             </div>
-            <div className="flex w-full h-full">
+            <div className="relative flex w-full h-full">
               {Array(5)
                 .fill(0)
                 .map((i, index) =>
                   ![1, 3].includes(index) ? (
                     <MovableButton
                       isDisabled={currentPlayerTurn !== username}
-                      onClick={() => onMoveTo(`1, ${index}`)}
+                      coord={`1,${index}`}
+                      onMoveTo={onMoveTo}
+                      playerLocationMapping={playerLocationMapping}
                     />
                   ) : (
                     <div className="w-full h-full" />
                   ),
                 )}
             </div>
-            <div className="flex w-full h-full">
+            <div className="relative flex w-full h-full">
               {Array(5)
                 .fill(0)
                 .map((i, index) => (
                   <MovableButton
                     isDisabled={currentPlayerTurn !== username}
-                    onClick={() => onMoveTo(`2, ${index}`)}
+                    coord={`2,${index}`}
+                    onMoveTo={onMoveTo}
+                    playerLocationMapping={playerLocationMapping}
                   />
                 ))}
             </div>
-            <div className="flex w-full h-full">
+            <div className="relative flex w-full h-full">
               {Array(5)
                 .fill(0)
                 .map((i, index) =>
                   ![1, 3].includes(index) ? (
                     <MovableButton
                       isDisabled={currentPlayerTurn !== username}
-                      onClick={() => onMoveTo(`3, ${index}`)}
+                      coord={`3,${index}`}
+                      onMoveTo={onMoveTo}
+                      playerLocationMapping={playerLocationMapping}
                     />
                   ) : (
                     <div className="w-full h-full" />
                   ),
                 )}
             </div>
-            <div className="flex w-full h-full">
+            <div className="relative flex w-full h-full">
               {Array(5)
                 .fill(0)
                 .map((i, index) => (
                   <MovableButton
                     isDisabled={currentPlayerTurn !== username}
-                    onClick={() => onMoveTo(`4, ${index}`)}
+                    coord={`4,${index}`}
+                    onMoveTo={onMoveTo}
+                    playerLocationMapping={playerLocationMapping}
                   />
                 ))}
             </div>
