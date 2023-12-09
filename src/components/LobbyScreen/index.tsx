@@ -1,5 +1,5 @@
 import { ReadyState } from 'react-use-websocket';
-import { Dispatch, useEffect, useState } from 'react';
+import { Dispatch, useCallback, useEffect, useState } from 'react';
 import { SetStateAction } from 'jotai';
 import LoginInputs from 'components/LoginInputs';
 import { WS, WSResponse } from 'types/common';
@@ -52,12 +52,11 @@ export default function LobbyScreen({
       } else if (data?.responseFor === 'createLobby') {
         // This ws last message is about a new lobby has been attempted to get created
         if (data?.success === 'true') {
-          // This ws last message is about a new lobby has been successfully created
-          setRoom(lobbyNameInput);
+          // This ws last message is about a new lobby has been successfully created by some
+          // other users. The creator will not receive this message
+          lobbyNameInput && setRoom(lobbyNameInput);
           setUserMess({
-            message: `A new room named ${data.created_lobby ?? ''} has been successfully created! ${
-              lobbyNameInput ? `You are now in room ${lobbyNameInput}` : ''
-            }`,
+            message: `A new room named ${data.created_lobby ?? ''} has been successfully created!`,
             type: 'SUCCESS',
           });
           onGetLobbies();
@@ -78,7 +77,7 @@ export default function LobbyScreen({
           setAllUserStatus(tracker);
           setRoom(data.lobby_name);
           setUserMess({
-            message: `${data.username ?? ''} has now joined room ${data.lobby_name ?? ''}`,
+            message: `${data.username ?? ''} has joined room ${data.lobby_name ?? ''}!`,
             type: 'SUCCESS',
           });
         } else {
@@ -95,8 +94,12 @@ export default function LobbyScreen({
           setIsReady(readyStatus);
           setAllUserStatus(tracker);
           setUserMess({
-            message: `The current users are ${String(Object.keys(tracker))}. You are now ${
-              readyStatus ? 'READY' : 'NOT READY'
+            message: `The current users are ${String(
+              Object.keys(tracker).join(', '),
+            )}. You are currently ${readyStatus ? 'READY' : 'NOT READY'}! ${
+              ((arr) => arr.every((v) => v === true))(Object.values(tracker))
+                ? 'The game can now be started!'
+                : ''
             }`,
             type: 'INFO',
           });
@@ -128,17 +131,27 @@ export default function LobbyScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ws?.lastMessage]);
 
-  console.log(!!ws?.lastMessage && JSON.parse(JSON.stringify(ws?.lastMessage.data)));
-
   const typeMapping = { SUCCESS: 'text-emerald-500', ERROR: 'text-red-500', INFO: 'text-blue-500' };
 
+  const onClickCreateLobby = useCallback(() => {
+    onCreateLobby({ username: user, lobbyName: lobbyNameInput });
+    setRoom(lobbyNameInput);
+    setAllUserStatus({ user: false } as { [key: string]: boolean });
+    setUserMess({
+      message: `A new room named ${lobbyNameInput} has been successfully created! You are now in room ${lobbyNameInput}.`,
+      type: 'SUCCESS',
+    });
+  }, [lobbyNameInput, onCreateLobby, user]);
+
+  console.log(room);
+
   return (
-    <div className="flex flex-col space-y-8 p-2">
+    <div className="flex flex-col p-2 space-y-8">
       {!user ? (
         <div className="flex space-x-2">
           <button
             type="button"
-            className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
+            className="p-2 text-white transition rounded-lg bg-slate-500 w-fit hover:bg-slate-600 disabled:opacity-50"
             onClick={() => onLogin({ username: usernameInput, password: passwordInput })}
             disabled={ws.readyState !== ReadyState.OPEN}
           >
@@ -146,7 +159,7 @@ export default function LobbyScreen({
           </button>
           <button
             type="button"
-            className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
+            className="p-2 text-white transition rounded-lg bg-slate-500 w-fit hover:bg-slate-600 disabled:opacity-50"
             onClick={onGetLobbies}
             disabled={ws.readyState !== ReadyState.OPEN}
           >
@@ -156,7 +169,7 @@ export default function LobbyScreen({
           <LoginInputs setUsernameInput={setUsernameInput} setPasswordInput={setPasswordInput} />
           {/* <button
             type="button"
-            className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
+            className="p-2 text-white transition rounded-lg bg-slate-500 w-fit hover:bg-slate-600 disabled:opacity-50"
             onClick={onGetUsers}
             disabled={getUsersState !== ReadyState.OPEN}
           >
@@ -176,14 +189,14 @@ export default function LobbyScreen({
             </div>
             {!!room && (
               <div className="flex flex-col space-y-2">
-                <div className="flex space-x-3 font-bold items-center">
+                <div className="flex items-center space-x-3 font-bold">
                   <div>Current state: </div>
                   <div className={isReady ? 'text-emerald-500' : 'text-slate-700'}>
                     {isReady ? 'READY' : 'NOT READY'}
                   </div>
                   <button
                     type="button"
-                    className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
+                    className="p-2 text-white transition rounded-lg bg-slate-500 w-fit hover:bg-slate-600 disabled:opacity-50"
                     onClick={() => onToggleReady({ username: user, lobbyName: room })}
                     disabled={ws.readyState !== ReadyState.OPEN}
                   >
@@ -196,7 +209,7 @@ export default function LobbyScreen({
                     {!!allUsersStatus &&
                       Object.entries(allUsersStatus).map((item, index) => (
                         <div
-                          className="border-3 border-slate-700 rounded-lg w-48 h-24 flex flex-col p-2 space-y-2 justify-center items-center"
+                          className="flex flex-col items-center justify-center w-48 h-24 p-2 space-y-2 rounded-lg border-3 border-slate-700"
                           key={`${index + 1}`}
                         >
                           <div>Player: {item[0]}</div>
@@ -212,7 +225,7 @@ export default function LobbyScreen({
                   </div>
                   <button
                     type="button"
-                    className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
+                    className="p-2 text-white transition rounded-lg bg-slate-500 w-fit hover:bg-slate-600 disabled:opacity-50"
                     onClick={() => onStartGame({ username: user, lobbyName: room })}
                     disabled={ws.readyState !== ReadyState.OPEN}
                   >
@@ -229,19 +242,13 @@ export default function LobbyScreen({
             <div className="flex items-center space-x-2">
               <div>New lobby name</div>
               <input
-                className="w-40 border border-slate-600 rounded-md p-2"
+                className="w-40 p-2 border rounded-md border-slate-600"
                 onChange={(e) => setLobbyNameInput(e.target.value)}
               />
               <button
                 type="button"
-                className="bg-slate-500 text-white p-2 rounded-lg w-fit hover:bg-slate-600 transition disabled:opacity-50"
-                onClick={() => {
-                  onCreateLobby({ username: user, lobbyName: lobbyNameInput });
-                  setUserMess({
-                    message: `A new room named ${lobbyNameInput} has been successfully created! You are now in room ${lobbyNameInput}`,
-                    type: 'SUCCESS',
-                  });
-                }}
+                className="p-2 text-white transition rounded-lg bg-slate-500 w-fit hover:bg-slate-600 disabled:opacity-50"
+                onClick={onClickCreateLobby}
                 disabled={ws.readyState !== ReadyState.OPEN}
               >
                 Create lobby
@@ -254,14 +261,14 @@ export default function LobbyScreen({
                 <button
                   type="button"
                   key={`${index + 1}`}
-                  className="bg-slate-900 text-white rounded-lg flex flex-col justify-between overflow-hidden min-h-32 w-80 cursor-pointer hover:brightness-125 transition text-start"
+                  className="flex flex-col justify-between overflow-hidden text-white transition rounded-lg cursor-pointer bg-slate-900 min-h-32 w-80 hover:brightness-125 text-start"
                   onClick={() => onJoinRoom({ username: user, lobbyName: lobby[0] })}
                 >
-                  <div className="text-3xl p-4 w-full font-bold">
+                  <div className="w-full p-4 text-3xl font-bold">
                     {index + 1}. {String(lobby[0] ?? '')}
                   </div>
-                  <div className="bg-slate-600 flex-1 p-4 w-full">
-                    <div className="text-lg text-slate-300 font-bold">Players</div>
+                  <div className="flex-1 w-full p-4 bg-slate-600">
+                    <div className="text-lg font-bold text-slate-300">Players</div>
                     <div className="text-sm text-slate-100">{String(lobby[1] ?? '')}</div>
                   </div>
                 </button>
