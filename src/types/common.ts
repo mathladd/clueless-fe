@@ -60,4 +60,5 @@ export type WSResponse = {
   diceTracker?: { [key: string]: number };
   highest_rolled?: string;
   characters?: Character[];
+  characterSelectionPhase?: 'finished';
 };

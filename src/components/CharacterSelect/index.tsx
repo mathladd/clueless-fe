@@ -17,21 +17,22 @@ function CharacterSelectModal({
     setChars(c);
   };
 
+  if (!availableChars) return null;
   return (
     <Modal centered show={show} onHide={handleClose}>
       <Modal.Header>
         <Modal.Title>Select your character!</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <div className="flex justify-center flex-wrap">
+        <div className="flex flex-wrap justify-center">
           {availableChars?.map((c, index) => (
             <button
               type="button"
               key={`${index + 1}`}
-              className="flex flex-shrink-0 justify-center items-center w-32 h-48 border-4 border-slate-700 rounded-lg overflow-hidden"
+              className="flex items-center justify-center flex-shrink-0 w-32 h-48 overflow-hidden border-4 rounded-lg border-slate-700"
               onClick={() => onClickChar(c)}
             >
-              <img src={cardImgMapping[c]} alt={c} className="w-full h-full flex-grow-0" />
+              <img src={cardImgMapping[c]} alt={c} className="flex-grow-0 w-full h-full" />
             </button>
           ))}
         </div>

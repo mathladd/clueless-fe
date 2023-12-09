@@ -4,13 +4,15 @@ export type GameBoardSetup = {
   winning_combo: string[];
 };
 
-export type Character =
-  | 'Miss Scarlett'
-  | 'Colonel Mustard'
-  | 'Mrs. White'
-  | 'Mr. Green'
-  | 'Mrs. Peacock'
-  | 'Professor Plum';
+export const CHARACTERS = [
+  'Miss Scarlett',
+  'Colonel Mustard',
+  'Mrs. White',
+  'Mr. Green',
+  'Mrs. Peacock',
+  'Professor Plum',
+] as const;
+export type Character = typeof CHARACTERS[number];
 export type Weapon = 'Candlestick' | 'Dagger' | 'Lead pipe' | 'Revolver' | 'Rope' | 'Spanner';
 export type Room =
   | 'Kitchen'

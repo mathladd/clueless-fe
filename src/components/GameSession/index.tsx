@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { WS, WSResponse } from 'types/common';
-import { Character, GameBoardSetup } from 'types/game';
+import { Character, GameBoardSetup, CHARACTERS } from 'types/game';
 import GameBoard from '../GameBoard/GameBoard';
 import CharacterSelectModal from '../CharacterSelect/index';
 import DiceModal from '../DiceModal/index';
@@ -8,7 +8,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import Card from './Card';
 import Player from './Player';
 
-type GameStatuses = 'rolledDice' | 'characterSelect';
+type GameStatuses = 'rolledDice' | 'characterSelect' | 'coreLoop';
 
 const statusDisplayMapping: { [key: GameStatuses | string]: string } = {
   rolledDice: 'Dice roll',
@@ -39,6 +39,9 @@ function GameSession({
   const [isRerolling, setIsRerolling] = useState(false);
 
   const [selectedCharacter, setSelectedCharacter] = useState<Character | undefined>();
+  const [prevTurnAvailableChars, setPrevTurnAvailableChars] = useState<Character[] | undefined>(
+    CHARACTERS as unknown as Character[] | undefined,
+  );
   const [availableCharacters, setAvailableCharacters] = useState<Character[] | undefined>();
 
   const [gameState, setGameState] = useState<GameStatuses>('rolledDice');
@@ -56,13 +59,41 @@ function GameSession({
         setGameState('rolledDice');
         setCurrentPlayerTurn(data?.currentTurn);
         setPlayerDiceMapping(data?.diceTracker);
-      } else if (data?.responseFor === 'characterSelect') {
+      } else if (data?.responseFor === 'characterSelect' && !!data?.characters) {
         setGameState('characterSelect');
         setAvailableCharacters(data?.characters);
-        setCurrentPlayerTurn(data?.currentTurn);
+      } else if (data?.responseFor === 'currentTurn') {
+        setGameState('coreLoop');
       }
     }
   }, [ws?.lastMessage?.data]);
+
+  useEffect(() => {
+    if (ws?.lastMessage?.data) {
+      const data = JSON.parse(String(ws?.lastMessage?.data)) as WSResponse;
+      if (
+        data?.responseFor === 'characterSelect' &&
+        availableCharacters?.length !== prevTurnAvailableChars?.length
+      ) {
+        if (availableCharacters?.length) {
+          const currentMapping = playerCharacterMapping?.filter(
+            (i) => i.username !== currentPlayerTurn,
+          );
+          const newMapping = currentMapping?.concat([
+            {
+              username: currentPlayerTurn,
+              character:
+                prevTurnAvailableChars?.find((c) => !availableCharacters?.includes(c)) ?? '',
+            },
+          ]);
+          setPlayerCharacterMapping(newMapping);
+          setPrevTurnAvailableChars(availableCharacters);
+        }
+        setCurrentPlayerTurn(data?.currentTurn);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableCharacters, ws?.lastMessage?.data]);
 
   useEffect(() => {
     if (currentPlayerTurn === username && gameState === 'rolledDice' && diceRole > 0) {
@@ -105,9 +136,9 @@ function GameSession({
       {gameState === 'characterSelect' && currentPlayerTurn === username && !selectedCharacter && (
         <CharacterSelectModal availableChars={availableCharacters} setChars={onSetChar} />
       )}
-      <div className="flex justify-between py-4 px-4 bg-slate-900">
-        <div className="text-white font-bold text-2xl">CLUELESS: The game!</div>
-        <div className="flex text-white text-lg space-x-8">
+      <div className="flex justify-between px-4 py-4 bg-slate-900">
+        <div className="text-2xl font-bold text-white">CLUELESS: The game!</div>
+        <div className="flex space-x-8 text-lg text-white">
           <div className="flex space-x-2">
             <div>You are:</div>
             <div className="text-red-200">{username}</div>
@@ -125,31 +156,43 @@ function GameSession({
           </div>
         </div>
       </div>
-      <div className="flex flex-col space-y-8 p-8">
+      <div className="flex flex-col p-8 space-y-8">
         <div className="flex flex-col space-y-4">
-          <div className="w-fit bg-emerald-900 p-4 text-slate-200 space-y-4 rounded-lg">
+          <div className="p-4 space-y-4 rounded-lg w-fit bg-emerald-900 text-slate-200">
             <div>
               <div className="text-xl font-semibold ">All players:</div>
               <div className="flex space-x-2">
-                {playerCharacterMapping?.map((p) => (
-                  <Player
-                    username={p.username ?? ''}
-                    diceRolled={
-                      gameState === 'rolledDice' && !!playerDiceMapping
-                        ? playerDiceMapping[p.username as string]
-                        : undefined
+                {playerCharacterMapping
+                  ?.sort((a, b) => {
+                    const name1 = a.username ?? '';
+                    const name2 = b.username ?? '';
+                    if (name1 < name2) {
+                      return -1;
                     }
-                    character={p.character}
-                    isCurrent={p.username === currentPlayerTurn}
-                  />
-                ))}
+                    if (name1 > name2) {
+                      return 1;
+                    }
+                    return 0;
+                  })
+                  .map((p) => (
+                    <Player
+                      username={p.username ?? ''}
+                      diceRolled={
+                        gameState === 'rolledDice' && !!playerDiceMapping
+                          ? playerDiceMapping[p.username as string]
+                          : undefined
+                      }
+                      character={p.character}
+                      isCurrent={p.username === currentPlayerTurn}
+                    />
+                  ))}
               </div>
             </div>
             {diceRole > 0 && <div className="text-xl font-semibold ">You rolled: {diceRole}</div>}
             <div className="text-xl font-semibold ">Current player turn: {currentPlayerTurn}</div>
           </div>
           <div className="flex space-x-4">
-            <div className="flex flex-col space-y-3 bg-slate-800 w-fit p-4 rounded-lg">
+            <div className="flex flex-col p-4 space-y-3 rounded-lg bg-slate-800 w-fit">
               <div className="text-xl font-bold text-slate-200">Your cards:</div>
               <div className="flex space-x-2">
                 {gameBoard?.player_cards[username].map((cardName) => (
@@ -157,7 +200,7 @@ function GameSession({
                 ))}
               </div>
             </div>
-            <div className="flex flex-col space-y-3 bg-slate-800 w-fit p-4 rounded-lg">
+            <div className="flex flex-col p-4 space-y-3 rounded-lg bg-slate-800 w-fit">
               <div className="text-xl font-bold text-slate-200">Leftover Cards:</div>
               <div className="flex space-x-2">
                 {gameBoard?.left_over_cards.map((cardName) => (
