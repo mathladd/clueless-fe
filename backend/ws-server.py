@@ -452,7 +452,7 @@ async def handle_character_selection(json_object):
         response = {
             "responseFor": "characterSelect",
             "currentTurn": "",
-            "characters": "",
+            "characters": current_lobby.character_selection_list,
             "characterSelectionPhase": "finished"
         }
 
