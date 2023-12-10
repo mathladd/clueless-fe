@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Spinner } from '@chakra-ui/react';
 import { GameBoardRes, SuggestParams, WS, WSResponse } from 'types/common';
 import { Character, GameBoardSetup, CHARACTERS } from 'types/game';
-import SuggestModal from 'components/SuggestModal';
+import SuggestAccuseModal from 'components/SuggestModal';
 import GameBoard from '../GameBoard/GameBoard';
 import CharacterSelectModal from '../CharacterSelectModal/index';
 import DiceModal from '../DiceModal/index';
@@ -115,6 +115,7 @@ function GameSession({
   const [hasMoved, setHasMoved] = useState(false);
   const [hasActioned, setHasActioned] = useState(false);
   const [isOpenModalSuggest, setIsOpenModalSuggest] = useState(false);
+  const [isOpenModalAccuse, setIsOpenModalAccuse] = useState(false);
   const [foundCard, setFoundCard] = useState<{
     username: string;
     card: string;
@@ -124,7 +125,7 @@ function GameSession({
   const isNotPlayerTurn = currentPlayerTurn !== username;
   const isDisabledAction = !!isNotPlayerTurn || !!hasActioned;
   const isDisabledMovement = !!isDisabledAction || !!hasMoved;
-  const currentPlayerCoord =
+  const userCoord =
     playerLocationMapping?.find((i) => i.username === username)?.currentCoord ?? '0,0';
 
   const onSetChar = (c: Character) => [setSelectedCharacter(c)];
@@ -134,7 +135,7 @@ function GameSession({
       request: 'characterMove',
       username,
       lobby_name: lobby,
-      prev_coords: currentPlayerCoord,
+      prev_coords: userCoord,
       new_coords: cord,
     });
     setHasMoved(true);
@@ -142,6 +143,7 @@ function GameSession({
 
   const onTurnEnd = () => {
     setHasMoved(false);
+    setHasActioned(false);
     setFoundCard({ username: '', card: '', suggestedUsername: '' });
     ws?.sendJsonMessage({
       request: 'nextTurn',
@@ -164,14 +166,24 @@ function GameSession({
       suggested_character: character,
       suggested_weapon: weapon,
       suggested_room: room,
-      ...(suggestedUsername ? { suggested_username: suggestedUsername } : {}),
-      ...(suggestedUsernameCoords ? { suggested_username_coords: suggestedUsernameCoords } : {}),
-      user_coords: currentPlayerCoord,
+      suggested_username: suggestedUsername,
+      suggested_username_coords: suggestedUsernameCoords ?? '0,0',
+      user_coords: userCoord,
     });
     setHasActioned(true);
   };
 
-  const onAccuse = () => {};
+  const onAccuse = ({ character, weapon, room }: SuggestParams) => {
+    ws?.sendJsonMessage({
+      request: 'accuse',
+      username,
+      lobby_name: lobby,
+      accused_character: character,
+      accused_weapon: weapon,
+      accused_room: room,
+    });
+    setHasActioned(true);
+  };
 
   useEffect(() => {
     if (ws?.lastMessage?.data) {
@@ -310,10 +322,16 @@ function GameSession({
       )}
 
       {gameState === 'coreLoop' && (
-        <SuggestModal
-          isOpen={isOpenModalSuggest}
-          onClose={() => setIsOpenModalSuggest(false)}
+        <SuggestAccuseModal
+          isOpenModalAccuse={isOpenModalAccuse}
+          isOpenModalSuggest={isOpenModalSuggest}
+          onClose={() => {
+            setIsOpenModalSuggest(false);
+            setIsOpenModalAccuse(false);
+          }}
           onSuggest={onSuggest}
+          onAccuse={onAccuse}
+          userCoord={userCoord}
         />
       )}
       <div className="flex justify-between px-4 py-4 bg-slate-900">
@@ -406,8 +424,8 @@ function GameSession({
                 className={`px-4 py-2 text-white transition rounded-lg bg-rose-800  ${
                   isDisabledAction ? '' : 'hover:bg-rose-700'
                 } disabled:opacity-30`}
-                onClick={onAccuse}
-                disabled={isDisabledAction}
+                onClick={() => setIsOpenModalAccuse(true)}
+                disabled={isNotPlayerTurn}
               >
                 Accuse!!
               </button>
@@ -423,9 +441,13 @@ function GameSession({
               End turn
             </button>
             <div className="text-rose-600">
-              {foundCard &&
+              {!!foundCard?.username &&
                 foundCard.suggestedUsername === username &&
                 `${foundCard.username} found that ${foundCard.card} was not involved in the crime!`}
+
+              {!!foundCard?.username &&
+                foundCard.suggestedUsername !== username &&
+                `${foundCard.suggestedUsername} has made an accusation!`}
             </div>
           </div>
 
@@ -443,7 +465,7 @@ function GameSession({
                     <MovableButton
                       isDisabled={isDisabledMovement}
                       coord={`0,${index}`}
-                      currentPlayerCoord={currentPlayerCoord}
+                      currentPlayerCoord={userCoord}
                       onMoveTo={onMoveTo}
                       playerLocationMapping={playerLocationMapping}
                     />
@@ -457,7 +479,7 @@ function GameSession({
                       <MovableButton
                         isDisabled={isDisabledMovement}
                         coord={`1,${index}`}
-                        currentPlayerCoord={currentPlayerCoord}
+                        currentPlayerCoord={userCoord}
                         onMoveTo={onMoveTo}
                         playerLocationMapping={playerLocationMapping}
                       />
@@ -473,7 +495,7 @@ function GameSession({
                     <MovableButton
                       isDisabled={isDisabledMovement}
                       coord={`2,${index}`}
-                      currentPlayerCoord={currentPlayerCoord}
+                      currentPlayerCoord={userCoord}
                       onMoveTo={onMoveTo}
                       playerLocationMapping={playerLocationMapping}
                     />
@@ -487,7 +509,7 @@ function GameSession({
                       <MovableButton
                         isDisabled={isDisabledMovement}
                         coord={`3,${index}`}
-                        currentPlayerCoord={currentPlayerCoord}
+                        currentPlayerCoord={userCoord}
                         onMoveTo={onMoveTo}
                         playerLocationMapping={playerLocationMapping}
                       />
@@ -503,7 +525,7 @@ function GameSession({
                     <MovableButton
                       isDisabled={isDisabledMovement}
                       coord={`4,${index}`}
-                      currentPlayerCoord={currentPlayerCoord}
+                      currentPlayerCoord={userCoord}
                       onMoveTo={onMoveTo}
                       playerLocationMapping={playerLocationMapping}
                     />

@@ -1,6 +1,6 @@
 import { SkeletonCircle } from '@chakra-ui/react';
+import { cardImgMapping } from 'config/mapping';
 import { Character } from 'types/game';
-import { cardImgMapping } from '../Card';
 
 export default function Player({
   username,

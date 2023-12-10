@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
+import { cardImgMapping } from 'config/mapping';
 import { Character } from 'types/game';
-import { cardImgMapping } from 'components/GameSession/Card';
 
 function CharacterSelectModal({
   availableChars,
