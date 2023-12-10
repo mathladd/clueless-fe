@@ -15,7 +15,7 @@ export default function ModalCustom({
   return (
     <div
       className={clsx(
-        'w-screen h-screen absolute top-0 left-0 mt-0 transition overflow-hidden z-50',
+        'w-screen h-screen min-h-full absolute top-0 left-0 mt-0 transition overflow-hidden z-50',
         isOpen ? 'opacity-1 h-screen visible' : 'opacity-0 h-0 invisible',
       )}
     >
@@ -29,7 +29,7 @@ export default function ModalCustom({
               className="absolute top-4 right-4 w-5 h-5 cursor-pointer hover:scale-125 active:scale-100 transition"
               onClick={onClose}
             >
-              <IClose className={`text-primary ${cssButtonClose}`} />
+              <IClose className={`text-primary ${cssButtonClose} text-slate-800`} />
             </button>
           </div>
         </div>

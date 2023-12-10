@@ -81,4 +81,5 @@ export type WSResponse = {
   found_card?: string;
   suggested_username?: string;
   nextTurn?: string;
+  result?: string;
 };

@@ -6,6 +6,8 @@ import { Spinner } from '@chakra-ui/react';
 import { GameBoardRes, SuggestParams, WS, WSResponse } from 'types/common';
 import { Character, GameBoardSetup, CHARACTERS } from 'types/game';
 import SuggestAccuseModal from 'components/SuggestModal';
+import ModalWinner from 'components/ModalWinner';
+import { roomCoordMapping } from 'config/mapping';
 import GameBoard from '../GameBoard/GameBoard';
 import CharacterSelectModal from '../CharacterSelectModal/index';
 import DiceModal from '../DiceModal/index';
@@ -55,6 +57,9 @@ function MovableButton({
         {}
       </button>
       <div className="absolute z-0 flex flex-wrap items-center justify-center w-full h-full space-x-2">
+        <div className="absolute font-bold top-0 bg-slate-200 border border-slate-900">
+          {Object.entries(roomCoordMapping).find((r) => r[1] === coord)?.[0]}
+        </div>
         {players?.map((player) => (
           <div
             className="flex items-center justify-center w-10 h-10 text-sm text-white rounded-full bg-slate-700"
@@ -122,6 +127,9 @@ function GameSession({
     suggestedUsername: string;
   }>();
 
+  const [winner, setWinner] = useState<string>();
+  const [eliminated, setEliminated] = useState<string>();
+
   const isNotPlayerTurn = currentPlayerTurn !== username;
   const isDisabledAction = !!isNotPlayerTurn || !!hasActioned;
   const isDisabledMovement = !!isDisabledAction || !!hasMoved;
@@ -166,7 +174,7 @@ function GameSession({
       suggested_character: character,
       suggested_weapon: weapon,
       suggested_room: room,
-      suggested_username: suggestedUsername,
+      suggested_username: suggestedUsername ?? null,
       suggested_username_coords: suggestedUsernameCoords ?? '0,0',
       user_coords: userCoord,
     });
@@ -262,6 +270,12 @@ function GameSession({
       } else if (data?.responseFor === 'nextTurn') {
         setGameState('coreLoop');
         !!data?.nextTurn && setCurrentPlayerTurn(data?.nextTurn);
+      } else if (data?.responseFor === 'accuse') {
+        if (data?.result === 'True') {
+          setWinner(currentPlayerTurn);
+        } else {
+          setEliminated(currentPlayerTurn);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -320,6 +334,7 @@ function GameSession({
       {gameState === 'characterSelect' && currentPlayerTurn === username && !selectedCharacter && (
         <CharacterSelectModal availableChars={availableCharacters} setChars={onSetChar} />
       )}
+      <ModalWinner winner={winner} />
 
       {gameState === 'coreLoop' && (
         <SuggestAccuseModal
@@ -440,15 +455,18 @@ function GameSession({
             >
               End turn
             </button>
-            <div className="text-rose-600">
-              {!!foundCard?.username &&
-                foundCard.suggestedUsername === username &&
-                `${foundCard.username} found that ${foundCard.card} was not involved in the crime!`}
-
-              {!!foundCard?.username &&
-                foundCard.suggestedUsername !== username &&
-                `${foundCard.suggestedUsername} has made an accusation!`}
-            </div>
+            {!!foundCard?.username && (
+              <div className="text-rose-600">
+                {foundCard.suggestedUsername === username
+                  ? `${foundCard.username} found that ${foundCard.card} was not involved in the crime!`
+                  : `${foundCard.suggestedUsername} has made a suggestion!`}
+              </div>
+            )}
+            {!!eliminated && (
+              <div className="text-rose-600">
+                {`${eliminated} made a wrong accusation and has been eliminated!`}
+              </div>
+            )}
           </div>
 
           <div className={`relative ${isDisabledAction ? 'opacity-50' : ''}`}>
