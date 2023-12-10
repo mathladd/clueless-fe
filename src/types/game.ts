@@ -12,15 +12,25 @@ export const CHARACTERS = [
   'Mrs. Peacock',
   'Professor Plum',
 ] as const;
+export const WEAPONS = [
+  'Candlestick',
+  'Dagger',
+  'Lead pipe',
+  'Revolver',
+  'Rope',
+  'Spanner',
+] as const;
+export const ROOMS = [
+  'Kitchen',
+  'Ballroom',
+  'Conservatory',
+  'Dining Room',
+  'Library',
+  'Billard Room',
+  'Lounge',
+  'Study',
+  'Hall',
+] as const;
 export type Character = typeof CHARACTERS[number];
-export type Weapon = 'Candlestick' | 'Dagger' | 'Lead pipe' | 'Revolver' | 'Rope' | 'Spanner';
-export type Room =
-  | 'Kitchen'
-  | 'Ballroom'
-  | 'Conservatory'
-  | 'Dining Room'
-  | 'Library'
-  | 'Billard Room'
-  | 'Lounge'
-  | 'Study'
-  | 'Hall';
+export type Weapon = typeof WEAPONS[number];
+export type Room = typeof ROOMS[number];

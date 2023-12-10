@@ -1,10 +1,13 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable camelcase */
 /* eslint-disable max-lines */
 import React, { useState, useEffect } from 'react';
 import { Spinner } from '@chakra-ui/react';
-import { GameBoardRes, WS, WSResponse } from 'types/common';
+import { GameBoardRes, SuggestParams, WS, WSResponse } from 'types/common';
 import { Character, GameBoardSetup, CHARACTERS } from 'types/game';
+import SuggestModal from 'components/SuggestModal';
 import GameBoard from '../GameBoard/GameBoard';
-import CharacterSelectModal from '../CharacterSelect/index';
+import CharacterSelectModal from '../CharacterSelectModal/index';
 import DiceModal from '../DiceModal/index';
 import 'bootstrap/dist/css/bootstrap.css';
 import Card from './Card';
@@ -15,30 +18,48 @@ type GameStatuses = 'rolledDice' | 'characterSelect' | 'coreLoop';
 function MovableButton({
   isDisabled,
   coord,
+  currentPlayerCoord,
   onMoveTo,
   playerLocationMapping,
 }: {
   isDisabled: boolean;
   coord: string;
+  currentPlayerCoord: string;
   onMoveTo: (cord: string) => void;
   playerLocationMapping: { username: string; currentCoord: string }[] | undefined;
 }) {
   const players = playerLocationMapping?.filter((i) => i.currentCoord === coord);
+  const currentPlayerCoords = currentPlayerCoord.split(',');
+  const fieldCoords = coord.split(',');
+  const isOneRow =
+    Math.abs(Number(currentPlayerCoords[0]) - Number(fieldCoords[0])) === 1 &&
+    Number(currentPlayerCoords[1]) === Number(fieldCoords[1]);
+  const isOneCol =
+    Math.abs(Number(currentPlayerCoords[1]) - Number(fieldCoords[1])) === 1 &&
+    Number(currentPlayerCoords[0]) === Number(fieldCoords[0]);
+  const isMovable = !isDisabled && ((isOneRow && !isOneCol) || (isOneCol && !isOneRow));
   return (
     <div className="relative flex w-full h-full" key={coord}>
       <button
         className={`absolute w-full h-full transition opacity-50 ${
-          isDisabled ? '' : 'cursor-pointer hover:bg-yellow-200 z-10'
+          isMovable
+            ? 'cursor-pointer bg-emerald-400 hover:bg-yellow-200 z-10'
+            : currentPlayerCoord !== coord
+            ? 'bg-slate-500'
+            : ''
         }`}
         type="button"
-        disabled={isDisabled}
+        disabled={!isMovable}
         onClick={() => onMoveTo(coord)}
       >
         {}
       </button>
       <div className="absolute z-0 flex flex-wrap items-center justify-center w-full h-full space-x-2">
         {players?.map((player) => (
-          <div className="flex items-center justify-center w-10 h-10 text-sm text-white rounded-full bg-slate-700">
+          <div
+            className="flex items-center justify-center w-10 h-10 text-sm text-white rounded-full bg-slate-700"
+            key={player.username}
+          >
             <div className="w-fit bg-slate-700">{String(player?.username)}</div>
           </div>
         ))}
@@ -68,27 +89,89 @@ function GameSession({
   // console.log('player_cards', gameBoard?.player_cards);
   // console.log('winning_combo', gameBoard);
 
+  // Meta
+  const [gameState, setGameState] = useState<GameStatuses>('rolledDice');
   const [currentPlayerTurn, setCurrentPlayerTurn] = useState<string | undefined>();
-  const [playerCharacterMapping, setPlayerCharacterMapping] =
-    useState<{ username: string | undefined; character: Character | string }[]>();
-  const [playerDiceMapping, setPlayerDiceMapping] = useState<{ [key: string]: number }>();
 
+  // Turn selection
+  const [playerDiceMapping, setPlayerDiceMapping] = useState<{ [key: string]: number }>();
   const [diceRole, setDiceRole] = useState(0);
   const [isRerolling, setIsRerolling] = useState(false);
 
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | undefined>();
+  // Character selection
+  const [availableCharacters, setAvailableCharacters] = useState<Character[] | undefined>();
   const [prevTurnAvailableChars, setPrevTurnAvailableChars] = useState<Character[] | undefined>(
     CHARACTERS as unknown as Character[] | undefined,
   );
-  const [availableCharacters, setAvailableCharacters] = useState<Character[] | undefined>();
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | undefined>();
+  const [playerCharacterMapping, setPlayerCharacterMapping] =
+    useState<{ username: string | undefined; character: Character | string }[]>();
 
-  const [gameState, setGameState] = useState<GameStatuses>('rolledDice');
-
+  // Location and core game
   const [renderedBoard, setRenderedBoard] = useState<GameBoardRes>();
   const [playerLocationMapping, setPlayerLocationMapping] =
     useState<{ username: string; currentCoord: string }[]>();
 
+  const [hasMoved, setHasMoved] = useState(false);
+  const [hasActioned, setHasActioned] = useState(false);
+  const [isOpenModalSuggest, setIsOpenModalSuggest] = useState(false);
+  const [foundCard, setFoundCard] = useState<{
+    username: string;
+    card: string;
+    suggestedUsername: string;
+  }>();
+
+  const isNotPlayerTurn = currentPlayerTurn !== username;
+  const isDisabledAction = !!isNotPlayerTurn || !!hasActioned;
+  const isDisabledMovement = !!isDisabledAction || !!hasMoved;
+  const currentPlayerCoord =
+    playerLocationMapping?.find((i) => i.username === username)?.currentCoord ?? '0,0';
+
   const onSetChar = (c: Character) => [setSelectedCharacter(c)];
+
+  const onMoveTo = (cord: string) => {
+    ws?.sendJsonMessage({
+      request: 'characterMove',
+      username,
+      lobby_name: lobby,
+      prev_coords: currentPlayerCoord,
+      new_coords: cord,
+    });
+    setHasMoved(true);
+  };
+
+  const onTurnEnd = () => {
+    setHasMoved(false);
+    setFoundCard({ username: '', card: '', suggestedUsername: '' });
+    ws?.sendJsonMessage({
+      request: 'nextTurn',
+      username,
+      lobby_name: lobby,
+    });
+  };
+
+  const onSuggest = ({ character, weapon, room }: SuggestParams) => {
+    const suggestedUsername = playerCharacterMapping?.find(
+      (i) => i.character === character,
+    )?.username;
+    const suggestedUsernameCoords =
+      playerLocationMapping?.find((i) => i.username === suggestedUsername)?.currentCoord ??
+      undefined;
+    ws?.sendJsonMessage({
+      request: 'suggest',
+      username,
+      lobby_name: lobby,
+      suggested_character: character,
+      suggested_weapon: weapon,
+      suggested_room: room,
+      ...(suggestedUsername ? { suggested_username: suggestedUsername } : {}),
+      ...(suggestedUsernameCoords ? { suggested_username_coords: suggestedUsernameCoords } : {}),
+      user_coords: currentPlayerCoord,
+    });
+    setHasActioned(true);
+  };
+
+  const onAccuse = () => {};
 
   useEffect(() => {
     if (ws?.lastMessage?.data) {
@@ -99,61 +182,78 @@ function GameSession({
           setIsRerolling(true);
         }
         setGameState('rolledDice');
-        setCurrentPlayerTurn(data?.currentTurn);
+        !!data?.currentTurn && setCurrentPlayerTurn(data?.currentTurn);
         setPlayerDiceMapping(data?.diceTracker);
       } else if (data?.responseFor === 'characterSelect' && !!data?.characters) {
         setGameState('characterSelect');
         setAvailableCharacters(data?.characters);
+        if (
+          data?.responseFor === 'characterSelect' &&
+          data?.characters?.length !== prevTurnAvailableChars?.length
+        ) {
+          if (data?.characters?.length) {
+            if (data?.characterSelectionPhase === 'finished') {
+              // console.log(1111);
+              const lastPlayer = playerCharacterMapping?.find((i) => i.character === '')?.username;
+              if (lastPlayer) {
+                const currentMapping = playerCharacterMapping?.filter((i) => i.character !== '');
+                const newMapping = currentMapping?.concat([
+                  {
+                    username: lastPlayer,
+                    character:
+                      prevTurnAvailableChars?.find((c) => !data?.characters?.includes(c)) ?? '',
+                  },
+                ]);
+                setPlayerCharacterMapping(newMapping);
+                setPrevTurnAvailableChars(data?.characters);
+                // console.log('lastPlayer', lastPlayer);
+                // console.log('currentMapping', currentMapping);
+                // console.log('newMapping', newMapping);
+              }
+            } else {
+              // console.log(2222);
+              const currentMapping = playerCharacterMapping?.filter(
+                (i) => i.username !== currentPlayerTurn,
+              );
+              const newMapping = currentMapping?.concat([
+                {
+                  username: currentPlayerTurn,
+                  character:
+                    prevTurnAvailableChars?.find((c) => !data?.characters?.includes(c)) ?? '',
+                },
+              ]);
+              setPlayerCharacterMapping(newMapping);
+              setPrevTurnAvailableChars(data?.characters);
+              // console.log('currentMapping', currentMapping);
+              // console.log('newMapping', newMapping);
+            }
+          }
+          // console.log('currentPlayerTurn', currentPlayerTurn);
+          setCurrentPlayerTurn(data?.currentTurn);
+        }
       } else if (data?.responseFor === 'currentTurn') {
         setGameState('coreLoop');
-        setCurrentPlayerTurn(data?.currentTurn);
+        !!data?.currentTurn && setCurrentPlayerTurn(data?.currentTurn);
       } else if (data?.responseFor === 'renderBoard') {
         setGameState('coreLoop');
         setRenderedBoard(data?.gameBoard as GameBoardRes);
-      }
-    }
-  }, [ws?.lastMessage?.data]);
-
-  useEffect(() => {
-    if (ws?.lastMessage?.data) {
-      const data = JSON.parse(String(ws?.lastMessage?.data)) as WSResponse;
-      if (data?.responseFor === 'characterSelect' && data?.characterSelectionPhase === 'finished') {
-        const lastPlayer = playerCharacterMapping?.find((i) => i.character === '')?.character;
-        if (lastPlayer) {
-          const currentMapping = playerCharacterMapping?.filter((i) => i.character !== '');
-          const newMapping = currentMapping?.concat([
-            {
-              username: lastPlayer,
-              character:
-                prevTurnAvailableChars?.find((c) => !availableCharacters?.includes(c)) ?? '',
-            },
-          ]);
-          setPlayerCharacterMapping(newMapping);
-          setPrevTurnAvailableChars(availableCharacters);
-        }
-      } else if (
-        data?.responseFor === 'characterSelect' &&
-        availableCharacters?.length !== prevTurnAvailableChars?.length
-      ) {
-        if (availableCharacters?.length) {
-          const currentMapping = playerCharacterMapping?.filter(
-            (i) => i.username !== currentPlayerTurn,
-          );
-          const newMapping = currentMapping?.concat([
-            {
-              username: currentPlayerTurn,
-              character:
-                prevTurnAvailableChars?.find((c) => !availableCharacters?.includes(c)) ?? '',
-            },
-          ]);
-          setPlayerCharacterMapping(newMapping);
-          setPrevTurnAvailableChars(availableCharacters);
-        }
-        setCurrentPlayerTurn(data?.currentTurn);
+      } else if (data?.responseFor === 'suggest') {
+        setGameState('coreLoop');
+        data?.found_player &&
+          data?.found_card &&
+          data?.suggested_username &&
+          setFoundCard({
+            username: data?.found_player,
+            card: data?.found_card,
+            suggestedUsername: data?.suggested_username,
+          });
+      } else if (data?.responseFor === 'nextTurn') {
+        setGameState('coreLoop');
+        !!data?.nextTurn && setCurrentPlayerTurn(data?.nextTurn);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableCharacters, ws?.lastMessage?.data]);
+  }, [ws?.lastMessage?.data]);
 
   useEffect(() => {
     if (currentPlayerTurn === username && gameState === 'rolledDice' && diceRole > 0) {
@@ -176,7 +276,6 @@ function GameSession({
         lobby_name: lobby,
         chosenCharacter: selectedCharacter,
       });
-      setSelectedCharacter(undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPlayerTurn, selectedCharacter, lobby, username]);
@@ -186,8 +285,6 @@ function GameSession({
       Object.keys(gameBoard?.player_cards ?? {}).map((p) => ({ username: p, character: '' })),
     );
   }, [gameBoard?.player_cards]);
-
-  const isGameDisabled = gameState !== 'coreLoop' || currentPlayerTurn !== username;
 
   useEffect(() => {
     !!renderedBoard &&
@@ -202,23 +299,6 @@ function GameSession({
       );
   }, [playerCharacterMapping, renderedBoard]);
 
-  console.log('playerLocationMapping', playerLocationMapping);
-
-  const onMoveTo = (cord: string) => {
-    ws?.sendJsonMessage({
-      request: 'characterMove',
-      username,
-      lobby_name: lobby,
-      prev_coords:
-        playerLocationMapping?.find((i) => i.username === username)?.currentCoord ?? '0,0',
-      new_coords: cord,
-    });
-  };
-
-  const onAccuse = () => {};
-
-  const onSuggest = () => {};
-
   if (!username || !lobby || !gameBoard) return null;
   return (
     <div>
@@ -227,6 +307,14 @@ function GameSession({
       )}
       {gameState === 'characterSelect' && currentPlayerTurn === username && !selectedCharacter && (
         <CharacterSelectModal availableChars={availableCharacters} setChars={onSetChar} />
+      )}
+
+      {gameState === 'coreLoop' && (
+        <SuggestModal
+          isOpen={isOpenModalSuggest}
+          onClose={() => setIsOpenModalSuggest(false)}
+          onSuggest={onSuggest}
+        />
       )}
       <div className="flex justify-between px-4 py-4 bg-slate-900">
         <div className="text-2xl font-bold text-white">CLUELESS: The game!</div>
@@ -249,35 +337,31 @@ function GameSession({
         </div>
       </div>
 
-      <div className="flex px-8 pt-2 space-x-2">
-        <button
-          type="button"
-          className={`px-4 py-2 text-white transition rounded-lg bg-slate-600 ${
-            isGameDisabled ? '' : 'hover:bg-slate-500'
-          } disabled:opacity-30`}
-          onClick={onSuggest}
-          disabled={isGameDisabled}
-        >
-          Suggest...
-        </button>
-        <button
-          type="button"
-          className={`px-4 py-2 text-white transition rounded-lg bg-rose-800  ${
-            isGameDisabled ? '' : 'hover:bg-rose-700'
-          } disabled:opacity-30`}
-          onClick={onAccuse}
-          disabled={isGameDisabled}
-        >
-          Accuse!!
-        </button>
-      </div>
+      <div className="flex flex-col px-8 pt-2 space-y-2">
+        <div className="flex space-x-2">
+          <div className="flex flex-col p-1 space-y-1 rounded-lg bg-slate-800 w-fit">
+            <div className="text-xl font-bold text-slate-200">Your cards:</div>
+            <div className="flex space-x-1">
+              {gameBoard?.player_cards[username].map((cardName) => (
+                <Card cardName={cardName} />
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col p-1 space-y-1 rounded-lg bg-slate-800 w-fit">
+            <div className="text-xl font-bold text-slate-200">Leftover Cards:</div>
+            <div className="flex space-x-2">
+              {gameBoard?.left_over_cards.map((cardName) => (
+                <Card cardName={cardName} />
+              ))}
+            </div>
+          </div>
+        </div>
 
-      <div className="flex flex-col px-8 pt-2 space-y-8">
-        <div className="flex flex-col space-y-4">
-          <div className="p-4 space-y-4 rounded-lg w-fit bg-emerald-900 text-slate-200">
-            <div>
+        <div className="flex space-x-2">
+          <div className="flex flex-col w-60 items-stretch pt-2 space-y-2">
+            <div className="space-y-1 rounded-lg w-fit h-fit bg-emerald-900 text-slate-200">
               <div className="text-xl font-semibold ">All players:</div>
-              <div className="flex space-x-2">
+              <div className="flex space-x-1 flex-wrap justify-center items-center">
                 {playerCharacterMapping
                   ?.sort((a, b) => {
                     const name1 = a.username ?? '';
@@ -303,108 +387,131 @@ function GameSession({
                     />
                   ))}
               </div>
+              {diceRole > 0 && <div className="text-xl font-semibold ">You rolled: {diceRole}</div>}
+              <div className="text-xl font-semibold ">Current player turn: {currentPlayerTurn}</div>
             </div>
-            {diceRole > 0 && <div className="text-xl font-semibold ">You rolled: {diceRole}</div>}
-            <div className="text-xl font-semibold ">Current player turn: {currentPlayerTurn}</div>
+            <div className="flex space-x-2 w-fit">
+              <button
+                type="button"
+                className={`px-4 py-2 text-white transition rounded-lg bg-slate-600 ${
+                  isDisabledAction ? '' : 'hover:bg-slate-500'
+                } disabled:opacity-30`}
+                onClick={() => setIsOpenModalSuggest(true)}
+                disabled={isDisabledAction}
+              >
+                Suggest...
+              </button>
+              <button
+                type="button"
+                className={`px-4 py-2 text-white transition rounded-lg bg-rose-800  ${
+                  isDisabledAction ? '' : 'hover:bg-rose-700'
+                } disabled:opacity-30`}
+                onClick={onAccuse}
+                disabled={isDisabledAction}
+              >
+                Accuse!!
+              </button>
+            </div>
+            <button
+              type="button"
+              className={`px-4 py-2 text-white transition rounded-lg bg-slate-800  ${
+                isNotPlayerTurn ? '' : 'hover:bg-slate-700'
+              } disabled:opacity-30`}
+              onClick={onTurnEnd}
+              disabled={isNotPlayerTurn}
+            >
+              End turn
+            </button>
+            <div className="text-rose-600">
+              {foundCard &&
+                foundCard.suggestedUsername === username &&
+                `${foundCard.username} found that ${foundCard.card} was not involved in the crime!`}
+            </div>
           </div>
-          <div className="flex space-x-4">
-            <div className="flex flex-col p-4 space-y-3 rounded-lg bg-slate-800 w-fit">
-              <div className="text-xl font-bold text-slate-200">Your cards:</div>
-              <div className="flex space-x-2">
-                {gameBoard?.player_cards[username].map((cardName) => (
-                  <Card cardName={cardName} />
-                ))}
+
+          <div className={`relative ${isDisabledAction ? 'opacity-50' : ''}`}>
+            {isDisabledAction && (
+              <div className="absolute flex items-center justify-center w-full h-full">
+                <Spinner size="xl" color="black" thickness="10px" speed="1s" />
               </div>
-            </div>
-            <div className="flex flex-col p-4 space-y-3 rounded-lg bg-slate-800 w-fit">
-              <div className="text-xl font-bold text-slate-200">Leftover Cards:</div>
-              <div className="flex space-x-2">
-                {gameBoard?.left_over_cards.map((cardName) => (
-                  <Card cardName={cardName} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          className={`relative m-auto my-4 ${currentPlayerTurn === username ? '' : 'opacity-50'}`}
-        >
-          {currentPlayerTurn !== username && (
-            <div className="absolute flex items-center justify-center w-full h-full">
-              <Spinner size="xl" color="black" thickness="10px" speed="1s" />
-            </div>
-          )}
-          <div className="absolute  w-[655px] h-[510px] flex flex-col">
-            <div className="relative flex w-full h-full">
-              {Array(5)
-                .fill(0)
-                .map((i, index) => (
-                  <MovableButton
-                    isDisabled={currentPlayerTurn !== username}
-                    coord={`0,${index}`}
-                    onMoveTo={onMoveTo}
-                    playerLocationMapping={playerLocationMapping}
-                  />
-                ))}
-            </div>
-            <div className="relative flex w-full h-full">
-              {Array(5)
-                .fill(0)
-                .map((i, index) =>
-                  ![1, 3].includes(index) ? (
+            )}
+            <div className="absolute  w-[655px] h-[510px] flex flex-col">
+              <div className="relative flex w-full h-full">
+                {Array(5)
+                  .fill(0)
+                  .map((i, index) => (
                     <MovableButton
-                      isDisabled={currentPlayerTurn !== username}
-                      coord={`1,${index}`}
+                      isDisabled={isDisabledMovement}
+                      coord={`0,${index}`}
+                      currentPlayerCoord={currentPlayerCoord}
                       onMoveTo={onMoveTo}
                       playerLocationMapping={playerLocationMapping}
                     />
-                  ) : (
-                    <div className="w-full h-full" />
-                  ),
-                )}
-            </div>
-            <div className="relative flex w-full h-full">
-              {Array(5)
-                .fill(0)
-                .map((i, index) => (
-                  <MovableButton
-                    isDisabled={currentPlayerTurn !== username}
-                    coord={`2,${index}`}
-                    onMoveTo={onMoveTo}
-                    playerLocationMapping={playerLocationMapping}
-                  />
-                ))}
-            </div>
-            <div className="relative flex w-full h-full">
-              {Array(5)
-                .fill(0)
-                .map((i, index) =>
-                  ![1, 3].includes(index) ? (
+                  ))}
+              </div>
+              <div className="relative flex w-full h-full">
+                {Array(5)
+                  .fill(0)
+                  .map((i, index) =>
+                    ![1, 3].includes(index) ? (
+                      <MovableButton
+                        isDisabled={isDisabledMovement}
+                        coord={`1,${index}`}
+                        currentPlayerCoord={currentPlayerCoord}
+                        onMoveTo={onMoveTo}
+                        playerLocationMapping={playerLocationMapping}
+                      />
+                    ) : (
+                      <div className="w-full h-full" />
+                    ),
+                  )}
+              </div>
+              <div className="relative flex w-full h-full">
+                {Array(5)
+                  .fill(0)
+                  .map((i, index) => (
                     <MovableButton
-                      isDisabled={currentPlayerTurn !== username}
-                      coord={`3,${index}`}
+                      isDisabled={isDisabledMovement}
+                      coord={`2,${index}`}
+                      currentPlayerCoord={currentPlayerCoord}
                       onMoveTo={onMoveTo}
                       playerLocationMapping={playerLocationMapping}
                     />
-                  ) : (
-                    <div className="w-full h-full" />
-                  ),
-                )}
+                  ))}
+              </div>
+              <div className="relative flex w-full h-full">
+                {Array(5)
+                  .fill(0)
+                  .map((i, index) =>
+                    ![1, 3].includes(index) ? (
+                      <MovableButton
+                        isDisabled={isDisabledMovement}
+                        coord={`3,${index}`}
+                        currentPlayerCoord={currentPlayerCoord}
+                        onMoveTo={onMoveTo}
+                        playerLocationMapping={playerLocationMapping}
+                      />
+                    ) : (
+                      <div className="w-full h-full" />
+                    ),
+                  )}
+              </div>
+              <div className="relative flex w-full h-full">
+                {Array(5)
+                  .fill(0)
+                  .map((i, index) => (
+                    <MovableButton
+                      isDisabled={isDisabledMovement}
+                      coord={`4,${index}`}
+                      currentPlayerCoord={currentPlayerCoord}
+                      onMoveTo={onMoveTo}
+                      playerLocationMapping={playerLocationMapping}
+                    />
+                  ))}
+              </div>
             </div>
-            <div className="relative flex w-full h-full">
-              {Array(5)
-                .fill(0)
-                .map((i, index) => (
-                  <MovableButton
-                    isDisabled={currentPlayerTurn !== username}
-                    coord={`4,${index}`}
-                    onMoveTo={onMoveTo}
-                    playerLocationMapping={playerLocationMapping}
-                  />
-                ))}
-            </div>
+            <GameBoard />
           </div>
-          <GameBoard />
         </div>
       </div>
     </div>

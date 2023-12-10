@@ -1,7 +1,7 @@
 import { SendJsonMessage } from 'react-use-websocket/dist/lib/types';
 import { ReadyState } from 'react-use-websocket';
 import { UserReady } from './lobby';
-import { Character } from './game';
+import { Character, Room, Weapon } from './game';
 
 export interface RegionalCurrencies {
   USD: string;
@@ -44,14 +44,19 @@ export type WS = {
   readyState: ReadyState;
 };
 
-
 export type GameBoardRes = {
   [key: string]: {
     name: string;
     players: string[];
     weapons: string[];
   };
-}
+};
+
+export type SuggestParams = {
+  character: Character;
+  weapon: Weapon;
+  room: Room;
+};
 
 export type WSResponse = {
   responseFor?: string;
@@ -71,5 +76,9 @@ export type WSResponse = {
   characters?: Character[];
   characterSelectionPhase?: 'finished';
 
-  gameBoard: ;
+  gameBoard?: GameBoardRes;
+  found_player?: string;
+  found_card?: string;
+  suggested_username?: string;
+  nextTurn?: string;
 };

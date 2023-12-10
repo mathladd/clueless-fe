@@ -14,8 +14,8 @@ export default function Player({
   isCurrent: boolean;
 }) {
   return (
-    <div className="flex flex-col justify-center items-center relative">
-      <div className="flex justify-center items-center w-32 h-48 border-4 border-slate-700 rounded-lg overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center">
+      <div className="flex items-center justify-center w-24 h-32 overflow-hidden border-4 rounded-lg border-slate-700">
         <img
           src={
             character
@@ -23,7 +23,7 @@ export default function Player({
               : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmV_GMmai8gMADcJbWJgdA7VNIEN1Bx1strQ&usqp=CAU'
           }
           alt={character}
-          className="w-full h-full flex-grow-0"
+          className="flex-grow-0 w-full h-full"
         />
       </div>
       <div>{username}</div>
@@ -32,7 +32,7 @@ export default function Player({
         <SkeletonCircle size="10" sx={{ position: 'absolute', alignSelf: 'center', top: '40%' }} />
       )}
       {!!diceRolled && (
-        <div className="absolute font-bold text-6xl algin-self-center text-slate-900 bg-blue-300 rounded-lg">
+        <div className="absolute text-6xl font-bold bg-blue-300 rounded-lg algin-self-center text-slate-900">
           {diceRolled}
         </div>
       )}
